@@ -154,18 +154,31 @@ output$overview_checkboxes_ui = renderUI({
   )
 })
 
+
+use_limits_default = reactiveVal(TRUE)
+observeEvent(input$plot_min, ignoreInit = TRUE, {
+  use_limits_default(FALSE)
+})
+
+
 output$plot_ranges_ui = renderUI({
   d = values$overview_plot_data
-  d <<- d
   if (!is.null(d)) {
-    max_value = max(na.omit(d[, 3]))
+    min_value = if (use_limits_default()) 0 else isolate(input$plot_min)
+    max_value = if (use_limits_default()) max(na.omit(d[, 3])) else isolate(input$plot_max)
     list(
       fluidRow(
         column(6, align = "center",
-          numericInput(inputId = "plot_min", label = "min", value = 0)
+          numericInput(inputId = "plot_min", label = "min", value = min_value)
         ),
         column(6, align = "center",
           numericInput(inputId = "plot_max", label = "max", value = max_value)
+        ),
+        column(12, align = "center",
+          prettyCheckbox(inputId = "plot_logscale",
+            value = isolate(input$plot_logscale),
+            label = "logscale (base 10)",
+            status = "info", shape = "round", animation = "pulse")
         )
       )
     )
@@ -221,6 +234,7 @@ overview_plot = reactive({
   reqAndAssign(input$measure, "ms")
   reqAndAssign(input$plot_min, "min")
   reqAndAssign(input$plot_max, "max")
+  logscale = input$plot_logscale
 
   p = ggplot(d, aes(x = task, y = get(ms), col = framework)) +
   geom_point(aes(group = framework), position = position_jitterdodge()) + #geom_boxplot() +
@@ -230,6 +244,10 @@ overview_plot = reactive({
     theme_minimal() +
     ylim(min, max) +
     coord_flip()
+
+  if (logscale) {
+    p = p + scale_y_continuous(trans = "log10")
+  }
 
   if (t %nin% c("Binary", "Multiclass", "Binary + Multiclass", "Regression")) {
     p2 = ggdensity(d, x = ms,
