@@ -10,7 +10,7 @@ values = reactiveValues(
 )
 
 observe({
-  values$data = preprocData(read.csv("data/results_new.csv", stringsAsFactors = TRUE))
+  values$data = preprocData(read.csv("data/final_results.csv", stringsAsFactors = TRUE))
   values$chars = readRDS("data/task_list.RDS")
   values$overview_plot_data = NULL
   # values$w_1h = readRDS("data/w_1h.RDS")
@@ -183,6 +183,18 @@ output$plot_ranges_ui = renderUI({
       )
     )
   }
+})
+
+observeEvent(input$task, {
+  d = overview_plot_data()
+  updateNumericInput(session, "plot_min", value = 0)
+  updateNumericInput(session, "plot_max", value = max(na.omit(d[, 3])))
+})
+
+observeEvent(input$measure, {
+  d = overview_plot_data()
+  updateNumericInput(session, "plot_min", value = 0)
+  updateNumericInput(session, "plot_max", value = max(na.omit(d[, 3])))
 })
 
 

@@ -17,8 +17,10 @@ packages = c(
   "farff",
   "BBmisc",
   "stringr",
-  "scmamp",
-  "partykit"
+  # "scmamp",
+  "partykit",
+  "data.table",
+  "mlr3benchmark"
 )
 
 for (p in packages) {

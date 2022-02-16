@@ -74,38 +74,6 @@ output$analysis_checkboxes_ui = renderUI({
   )
 })
 
-# model_plot = reactive({
-#   # reqAndAssign(input$task_type, "type")
-#   reqAndAssign(input$analysis_measure, "ms")
-#   reqAndAssign(input$drop_framework, "drop")
-#   reqAndAssign(input$model_type, "mt")
-#   reqAndAssign(data(), "data")
-
-#   if ("None" %in% drop) {
-#     d = getFilteredData(data, ms)
-#   } else {
-#     d = getFilteredData(data, ms, drop)
-#   }
-
-  #if (mt == "bttree") {
-  #  d_wide = pivot_wider(d, names_from = "framework", values_from = ms)
-  #  model = bttree(as.formula(paste0(ms, " ~ .")), d)
-  #  plot(model)
-  #} # else if (mt == "rpart") {
-  #   task = TaskRegr$new("regression_task", backend = d, target = ms)
-  #   learner = lrn("regr.rpart")
-  #   learner$train(task)
-  #   model = learner$model
-  #   d$node = model$where
-  #   table(d$node, d$framework)
-  #   # rpart.plot(learner$model, roundint = FALSE)
-  # }
-# })
-
-# output$drop_framework_text = renderText({
-#   reqAndAssign(input$drop_framework, "drop")
-#   drop
-# })
 
 output$analysis_models_plot = renderPlot({
   model_plot()
@@ -113,12 +81,8 @@ output$analysis_models_plot = renderPlot({
 
 
 ### 'Hypothesis Tests' part
-### includes several tests on average ranks
-### - Friedman test
 ### - Nemenyi test
-# output$analysis_test_table = renderDataTable({
 
-# })
 
 analysis_cdp = reactive({
   reqAndAssign(input$analysis_measure, "ms")
@@ -151,35 +115,28 @@ analysis_cdp = reactive({
 
   data_CD_plot = data_CD_plot %>%
     group_by(framework, task) %>%
-    summarize(mean_measure = mean(get(ms))) %>%
-    pivot_wider(names_from = "framework", values_from = mean_measure) %>%
-    as.data.frame()
-  rownames(data_CD_plot) = as.character(data_CD_plot$task)
-  data_CD_plot = dropNamed(data_CD_plot, "task")
+    summarize(!!ms := mean(get(ms), na.rm = TRUE)) %>%
+    pivot_wider(names_from = "task", values_from = !!ms) %>%
+    pivot_longer(cols = !contains("framework"), names_to = "task", values_to = ms, values_drop_na = FALSE) %>%
+    droplevels()
+
+  data_CD_plot$task = as.factor(data_CD_plot$task)
+
+  ba = mlr3benchmark::BenchmarkAggr$new(data_CD_plot, "task", "framework")
 
   par(mar = rep(0, 4))
   if (ms %in% c("logloss", "mae", "rmse")) {
-    p = plotCD(data_CD_plot, alpha = alpha, decreasing = FALSE, cex = 1.5)
+    p = cd_plot(ba$rank_data(minimize = TRUE), meas = ms, p.value = alpha)
   } else {
-    p = plotCD(data_CD_plot, alpha = alpha, cex = 1.5)
+    p = cd_plot(ba$rank_data(minimize = FALSE), meas = ms, p.value = alpha)
   }
   return(p)
 })
 
 output$analysis_cd_plot = renderPlot({
-  analysis_cdp()
-}, res = 46)
+  return(analysis_cdp())
+})
 
-# output$analysis_bayes_test = renderTable({
-#   # reqAndAssign(input$analysis_measure, "ms")
-#   # reqAndAssign(input$test_alpha, "alpha")
-#   # data_bayes = data %>%
-#   # group_by(framework, task) %>%
-#   # summarize(measure = mean(get(ms))) %>%
-#   # as.data.frame()
-#   # colnames(data_bayes)[1] = "algorithm"
-#   # b_hierarchical_test(data_bayes, baseline = "constantpredictor")
-# })
 
 output$analysis_tree_ui = renderUI({
   list(
@@ -189,9 +146,6 @@ output$analysis_tree_ui = renderUI({
       selected = levels(values$data$time)[1]
     ),
     sliderInput("analysis_tree_maxdepth", "Choose max depth of tree", min = 2L, max = 5L, value = 3L, step = 1L)
-  # br(),
-  # tags$hr(),
-  # bsButton("train_model", "Analyse!", icon = icon("diagnoses"))
   )
 })
 
