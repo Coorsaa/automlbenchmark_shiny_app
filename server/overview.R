@@ -197,6 +197,10 @@ observeEvent(input$measure, {
   updateNumericInput(session, "plot_max", value = max(na.omit(d[, 3])))
 })
 
+observeEvent(input$plot_logscale, {
+  updateNumericInput(session, "plot_min", value = ifelse(input$plot_logscale, 0.1, 0))
+})
+
 
 overview_plot_data = reactive({
   t = input$task
@@ -258,7 +262,7 @@ overview_plot = reactive({
     coord_flip()
 
   if (logscale) {
-    p = p + scale_y_continuous(trans = "log10")
+    p = p + scale_y_continuous(trans = "log10", limits = c(ifelse(min == 0, 0.1, min), max))
   }
 
   if (t %nin% c("Binary", "Multiclass", "Binary + Multiclass", "Regression")) {
