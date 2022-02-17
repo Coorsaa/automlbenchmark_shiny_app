@@ -28,7 +28,8 @@ tabpanel_analysis = fluidPage(theme = shinytheme("united"),
          condition = "input.analysis_method == 'trees'",
          uiOutput("analysis_tree_ui")
         ),
-        uiOutput("analysis_checkboxes_ui")
+        uiOutput("analysis_checkboxes_ui"),
+        downloadButton("download_cd_plot")
       )
     ),
     mainPanel(width = 9,

@@ -138,6 +138,26 @@ output$analysis_cd_plot = renderPlot({
 })
 
 
+output$download_cd_plot = downloadHandler(
+  filename = function() {
+    if (input$analysis_method == "tests") {
+      paste0("cd_plot_", input$task_type, "_", input$analysis_measure, ".pdf")
+    } else {
+      paste0("bratley_terry_tree", input$task_type, "_", input$analysis_measure, "_depth_", input$analysis_tree_maxdepth, ".pdf")
+    }
+  },
+  content = function(file) {
+    if (input$analysis_method == "tests") {
+      ggsave(file, plot = analysis_cdp(), device = "pdf", width = 15, height = 10)
+    } else {
+      pdf(file)
+      plotBTTree(bttree(), terminal_panel = node_btplot_angle)
+      dev.off()
+    }
+  }
+)
+
+
 output$analysis_tree_ui = renderUI({
   list(
     sliderTextInput(inputId = "analysis_time_select",
@@ -218,13 +238,16 @@ task_char_data = reactive({
     list(data = data, chars = chars)
 })
 
-output$tree_plot = renderPlot({
+bttree = reactive({
   reqAndAssign(input$analysis_measure, "ms")
   reqAndAssign(input$analysis_tree_maxdepth, "maxdepth")
-
   cd = task_char_data()
   data = cd$data
   chars = cd$chars
   bt = getBtTree(data, chars, ms, maxdepth)
-  plotBTTree(bt, terminal_panel = node_btplot_angle)
+  return(bt)
+})
+
+output$tree_plot = renderPlot({
+  plotBTTree(bttree(), terminal_panel = node_btplot_angle)
 })

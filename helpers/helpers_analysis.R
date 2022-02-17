@@ -43,9 +43,8 @@ critical_differences = function(rank_data, minimize, meas, p.value) {
   rank_y = rank(c(seq.int(length.out = sum(nem_df$xstart <= stats::median(df$mean_rank))),
     seq.int(length.out = sum(nem_df$xstart > stats::median(df$mean_rank)))),
     ties.method = "first")
-  nem_df$y = seq.int(from = 0.25, by = 0.5, length.out = nrow(nem_df))[rank_y]
+  nem_df$y = seq.int(from = 0.3, to = 1.8, length.out = nrow(nem_df))[rank_y]
   out$nemenyi_data = as.data.frame(nem_df) # nolint
-
   return(out)
 }
 
@@ -64,13 +63,18 @@ cd_plot = function(rank_data, minimize, meas, p.value) { # nolint
     yend = "yend"), size = 0.8)
   # Plot Learner name
   p = p + geom_text(aes_string("xend", "yend", label = "framework",
-    hjust = "right"), vjust = -1)
+    hjust = "right"), vjust = -1, size = 7)
 
   p = p + xlab("Average Rank")
   # Change appearance
   p = p + scale_x_continuous(breaks = c(0:max(cd$data$xend)))
-  p = p + theme(axis.text.y = element_blank(),
+  p = p + theme(
+    text = element_text(size = 20),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size =15),
     axis.ticks.y = element_blank(),
+    axis.ticks.x = element_line(size = 1),
+    axis.ticks.length=unit(.25, "cm"),
     axis.title.y = element_blank(),
     legend.position = "none",
     panel.background = element_blank(),
@@ -83,7 +87,7 @@ cd_plot = function(rank_data, minimize, meas, p.value) { # nolint
   # Add crit difference test (descriptive)
   p = p + annotate("text",
     label = paste("Critical Difference =", round(cd$cd, 2), sep = " "),
-    y = max(cd$data$yend) + 0.8, x = mean(cd$data$mean_rank))
+    y = max(cd$data$yend) + 0.8, x = mean(cd$data$mean_rank), size = 7)
   # Add bar (descriptive)
   p = p + annotate("segment",
     x = mean(cd$data$mean_rank) - 0.5 * cd$cd,
