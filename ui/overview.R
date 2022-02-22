@@ -17,8 +17,14 @@ tabpanel_overview = fluidPage(theme = shinytheme("united"),
     ),
     mainPanel(width = 9,
       div(align = "center",
-        plotlyOutput("overview_plot_all", height = "780px"),
-        plotOutput("overview_plot_task", height = "780px")
+        conditionalPanel(
+          condition = "output.overview_plot_type",
+          withSpinner(plotlyOutput("overview_plot_all", height = "780px"))
+        ),
+        conditionalPanel(
+          condition = "!output.overview_plot_type",
+          withSpinner(plotOutput("overview_plot_task", height = "780px"))
+        )
       )
     )
   )

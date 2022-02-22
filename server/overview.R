@@ -30,7 +30,8 @@ data = reactive({
   reqAndAssign(input$overview_data_select, "time")
 
   data = values$data %>%
-    filter(time == !!time)
+    filter(time == !!time) # filter timepoints
+
   data$id = as.integer(str_replace(data$id, "openml.org/t/", ""))
   return(data)
 })
@@ -230,6 +231,7 @@ overview_plot_data = reactive({
   d = d[d$framework %in% fw,]
   d$framework = droplevels(d$framework)
   d = removeDuplicates(d, ms)
+  d = replaceMissingsByConstantPredictor(d, ms)
 
   if (aggregate == TRUE) {
     d = d %>%
@@ -289,6 +291,11 @@ overview_plot = reactive({
   }
   return(p)
 })
+
+output$overview_plot_type = reactive({
+  input$task %in% c("Regression", "Binary", "Multiclass", "Binary + Multiclass")
+})
+outputOptions(output, "overview_plot_type", suspendWhenHidden = FALSE)
 
 output$overview_plot_all = renderPlotly({
   reqAndAssign(input$task, "t")

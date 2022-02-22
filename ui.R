@@ -6,6 +6,8 @@ library(shinyBS)
 library(shinyWidgets)
 library(markdown)
 library(shinythemes)
+library(shinycssloaders)
+library(shinybusy)
 
 source("./helpers/helpers_ui.R", local = TRUE)$value
 
@@ -19,6 +21,13 @@ for (i in seq_along(ui.files)) {
 shinyUI(
   tagList(
     useShinyjs(),
+    add_busy_spinner(
+      spin = "semipolar",
+      color = "#0F82E6",
+      position = "top-right",
+      margins = c(100, 100),
+      onstart = FALSE
+    ),
     loading.screens,
     div(id = "app-content",
       navbarPage(title = div(img(src = "openml.png", height = 35)),

@@ -11,7 +11,7 @@ tabpanel_analysis = fluidPage(theme = shinytheme("united"),
     sidebarPanel(width = 3,
       div(align = "center",
         selectInput("analysis_method", "Choose Method", choices = c("Critical Difference Tests" = "tests", "Bradley Terry Trees" = "trees"),
-        selected = "Critical Difference Tests"),
+          selected = "Critical Difference Tests"),
         uiOutput("analysis_task_type_ui"),
         uiOutput("analysis_measure_ui"),
         conditionalPanel(
@@ -25,8 +25,9 @@ tabpanel_analysis = fluidPage(theme = shinytheme("united"),
           sliderInput("test_alpha", "Significance Level", min = 0.01, max = 0.2, step = 0.01, value = 0.05)
         ),
         conditionalPanel(
-         condition = "input.analysis_method == 'trees'",
-         uiOutput("analysis_tree_ui")
+          condition = "input.analysis_method == 'trees'",
+          uiOutput("analysis_tree_ui"),
+          uiOutput("selected_chars")
         ),
         uiOutput("analysis_checkboxes_ui"),
         downloadButton("download_cd_plot")
@@ -43,7 +44,7 @@ tabpanel_analysis = fluidPage(theme = shinytheme("united"),
           # dataTableOutput("analysis_test_table"),
           #conditionalPanel(
           #  condition = "input.analysis_test == 'nemenyi'",
-          plotOutput("analysis_cd_plot", height = "780px"),
+          withSpinner(plotOutput("analysis_cd_plot", height = "780px")),
           #),
           # conditionalPanel(
           #   condition = "input.analysis_test == 'bayes'",

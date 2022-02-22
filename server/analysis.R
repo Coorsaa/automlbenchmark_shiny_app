@@ -94,9 +94,7 @@ analysis_cdp = reactive({
 
   data_CD_plot = data()
 
-  data_CD_plot = data_CD_plot[data_CD_plot$framework %in% fw,]
-  data_CD_plot$framework = droplevels(data_CD_plot$framework)
-
+  # filter task types
   if (tt == "Binary") {
     data_CD_plot = data_CD_plot %>%
       filter(task %nin% c(mc, regr))
@@ -111,11 +109,19 @@ analysis_cdp = reactive({
       filter(task %nin% regr)
   }
 
-  data_CD_plot = removeDuplicates(data_CD_plot, ms)
+  # replace missings with constant predictions
+  data_CD_plot = replaceMissingsByConstantPredictor(data_CD_plot, ms)
+
+  # filter frameworks
+  data_CD_plot = data_CD_plot[data_CD_plot$framework %in% fw,]
+  data_CD_plot$framework = droplevels(data_CD_plot$framework)
+
+  # data_CD_plot = removeDuplicates(data_CD_plot, ms)
 
   data_CD_plot = data_CD_plot %>%
     group_by(framework, task) %>%
-    summarize(!!ms := mean(get(ms), na.rm = TRUE)) %>%
+    summarize(!!ms := mean(get(ms))) %>%
+    ungroup() %>%
     pivot_wider(names_from = "task", values_from = !!ms) %>%
     pivot_longer(cols = !contains("framework"), names_to = "task", values_to = ms, values_drop_na = FALSE) %>%
     droplevels()
@@ -141,17 +147,17 @@ output$analysis_cd_plot = renderPlot({
 output$download_cd_plot = downloadHandler(
   filename = function() {
     if (input$analysis_method == "tests") {
-      paste0("cd_plot_", input$task_type, "_", input$analysis_measure, ".pdf")
+      paste0("cd_plot_", input$overview_data_select, "_", input$task_type, "_", input$analysis_measure, ".pdf")
     } else {
-      paste0("bratley_terry_tree", input$task_type, "_", input$analysis_measure, "_depth_", input$analysis_tree_maxdepth, ".pdf")
+      paste0("bratley_terry_tree_", input$analysis_time_select, "_", input$task_type, "_", input$analysis_measure, "_depth_", input$analysis_tree_maxdepth, ".pdf")
     }
   },
   content = function(file) {
     if (input$analysis_method == "tests") {
       ggsave(file, plot = analysis_cdp(), device = "pdf", width = 15, height = 10)
     } else {
-      pdf(file)
-      plotBTTree(bttree(), terminal_panel = node_btplot_angle)
+      pdf(file, width = 15, height = 10)
+      plotBTTree(bt_tree(), terminal_panel = node_btplot_angle)
       dev.off()
     }
   }
@@ -165,13 +171,16 @@ output$analysis_tree_ui = renderUI({
       choices = levels(values$data$time),
       selected = levels(values$data$time)[1]
     ),
-    sliderInput("analysis_tree_maxdepth", "Choose max depth of tree", min = 2L, max = 5L, value = 3L, step = 1L)
+    sliderInput("analysis_tree_maxdepth", "Choose max depth of tree", min = 2L, max = 5L, value = 3L, step = 1L),
+    sliderInput("analysis_tree_min_nodesize", "Choose min datasets in leaf", min = 3L, max = 10L, value = 5L, step = 1L),
+    actionButton("fit_bttree", "Fit BT Tree")
   )
 })
 
 task_char_data = reactive({
   reqAndAssign(input$analysis_time_select, "time")
   reqAndAssign(tolower(input$task_type), "type")
+  reqAndAssign(input$analysis_measure, "ms")
 
   data = values$data %>%
     filter(time == !!time)
@@ -189,6 +198,9 @@ task_char_data = reactive({
   }
 
   data$id = as.integer(str_replace(data$id, "openml.org/t/", ""))
+
+  # replace missings with constant predictions
+  data = replaceMissingsByConstantPredictor(data, ms)
 
   reqAndAssign(input$analysis_frameworks, "fw")
   data = data[data$framework %in% fw, ]
@@ -221,12 +233,19 @@ task_char_data = reactive({
     )
 
     if (type %in% c("regression", "all")) {
-      chars = chars %>% select(
-        - rel.majority.class.size,
+      chars = chars %>%
+        select(
+          - rel.majority.class.size,
           - rel.minority.class.size,
-          - imbalance.ratio,
+          - imbalance.ratio
+        )
+    }
+
+    if (type %in% c("binary", "regression")) {
+      chars = chars %>%
+        select(
           - number.of.classes
-      )
+        )
     }
 
     if (type != "all") {
@@ -238,16 +257,45 @@ task_char_data = reactive({
     list(data = data, chars = chars)
 })
 
-bttree = reactive({
-  reqAndAssign(input$analysis_measure, "ms")
-  reqAndAssign(input$analysis_tree_maxdepth, "maxdepth")
-  cd = task_char_data()
-  data = cd$data
-  chars = cd$chars
-  bt = getBtTree(data, chars, ms, maxdepth)
-  return(bt)
+
+selected_characteristics = reactive({
+  if (length(input$analysis_chars) != 0) {
+    return(isolate(input$analysis_chars))
+  } else {
+    cd = isolate(task_char_data())
+    return(setdiff(colnames(cd$chars), c("task.id", "data.id", "name")))
+  }
 })
 
-output$tree_plot = renderPlot({
-  plotBTTree(bttree(), terminal_panel = node_btplot_angle)
+output$selected_chars = renderUI({
+  cd = task_char_data()
+  characteristics = setdiff(colnames(cd$chars), c("task.id", "data.id", "name"))
+  list(
+    fluidRow(
+      column(1),
+      column(10, align = "left",
+        prettyCheckboxGroup(inputId = "analysis_chars",
+          label = "Characteristics",
+          choices = characteristics,
+          selected = selected_characteristics(),
+          status = "info", shape = "round", animation = "pulse")
+      )
+    )
+  )
+})
+
+
+bt_tree = reactiveVal()
+
+observeEvent(input$fit_bttree, {
+  reqAndAssign(input$analysis_measure, "ms")
+  reqAndAssign(input$analysis_tree_maxdepth, "maxdepth")
+  reqAndAssign(input$analysis_tree_min_nodesize, "min_nodesize")
+  cd = isolate(task_char_data())
+  data = cd$data
+  chars = cd$chars %>% select(task.id, data.id, name, input$analysis_chars)
+  bt_tree(getBtTree(data, chars, ms, maxdepth, min_nodesize * 10))
+  output$tree_plot = renderPlot({
+    plotBTTree(bt_tree(), terminal_panel = node_btplot_angle)
+  })
 })

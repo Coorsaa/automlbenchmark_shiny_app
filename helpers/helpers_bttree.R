@@ -12,7 +12,7 @@ bttree_paircomp = function (x) {
   paircomp(r, labels = colnames(x), mscale = c(-1, 0, 1))
 }
 
-getBtTree = function(data, characteristics, measure, maxdepth) {
+getBtTree = function(data, characteristics, measure, maxdepth, min_nodesize) {
   comp_data = data %>%
   select(id, task, fold, framework, all_of(measure)) %>%
     removeDuplicates() %>%
@@ -22,7 +22,7 @@ getBtTree = function(data, characteristics, measure, maxdepth) {
   tree_data = cd %>%
     left_join(characteristics[, -c(2, 3)], by = c("id" = "task.id")) %>%
     select(-id)
-  bttree(preferences ~ ., data = na.omit(tree_data), maxdepth = maxdepth)
+  bttree(preferences ~ ., data = na.omit(tree_data), maxdepth = maxdepth, minsize = min_nodesize)
 }
 
 node_btplot_angle = function (mobobj, id = TRUE, worth = TRUE, abbreviate = FALSE,
