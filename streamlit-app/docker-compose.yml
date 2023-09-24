@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  backend:
+    platform: linux/amd64
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: main
+    command: R -e "api.R"
+    volumes:
+      - type: bind
+        source: backend/
+        target: /app/.
+    ports:
+      - "8080:8080"
+    restart: on-failure:5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - type: bind
+        source: frontend/
+        target: /app/.
+    working_dir: /app/src
+    command: streamlit run app.py --server.address 0.0.0.0 --server.port 5175
+    ports:
+      - "5175:5175"
+    restart: on-failure:5
+    depends_on:
+      - backend

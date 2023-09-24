@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: main
+    command: R -e "api.R"
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+    restart: on-failure:5

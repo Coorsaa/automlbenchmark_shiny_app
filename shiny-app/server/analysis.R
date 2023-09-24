@@ -200,7 +200,7 @@ task_char_data = reactive({
   data$id = as.integer(str_replace(data$id, "openml.org/t/", ""))
 
   # replace missings with constant predictions
-  data = replaceMissingsByConstantPredictor(data, ms)
+  #data = replaceMissingsByConstantPredictor(data, ms)
 
   reqAndAssign(input$analysis_frameworks, "fw")
   data = data[data$framework %in% fw, ]
