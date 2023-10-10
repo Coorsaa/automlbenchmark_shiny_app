@@ -9,7 +9,7 @@ _repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
 
 
 def configure_streamlit():
-    """ Sets the streamlit page configuration."""
+    """Sets the streamlit page configuration."""
     st.set_page_config(
         page_title=f"AutoML-Benchmark Analysis App - v{__version__}",
         menu_items={
@@ -19,24 +19,35 @@ def configure_streamlit():
     )
 
 
+def create_file_input():
+    """Creates a file input which may store a dataframe under session_state.raw_data."""
+    with st.sidebar:
+        with st.form("user_inputs"):
+            # streamlit side panel (input forms)
+            st.markdown("### Data")
+            raw_data = st.file_uploader(
+                label="Upload your data here:", accept_multiple_files=False
+            )
+            upload_file = st.form_submit_button("Upload Files")
+
+        if upload_file:
+            st.session_state.raw_data = pd.read_csv(raw_data)
+
+
+def show_overview():
+    """Generates content for the overview page."""
+    if "raw_data" not in st.session_state:
+        st.text("Please upload a result file from the sidebar on the left.")
+        return
+    st.dataframe(st.session_state.raw_data)
+
+
 if __name__ == "__main__":
     configure_streamlit()
     tabs = create_sidebar_page_navigation()
     if tabs == Navigation.OVERVIEW:
-        with st.sidebar:
-            with st.form("user_inputs"):
-                # streamlit side panel (input forms)
-                st.markdown("### Data")
-                raw_data = st.file_uploader(
-                    label = "Upload your data here:", accept_multiple_files = False
-                )
-                upload_file = st.form_submit_button("Upload Files")
-
-            if upload_file:
-                st.session_state.raw_data = pd.read_csv(raw_data)
-
-        if "raw_data" in st.session_state:
-            st.dataframe(st.session_state.raw_data)
+        create_file_input()
+        show_overview()
 
     if tabs == Navigation.ANALYSIS and "raw_data" in st.session_state:
         frameworks = st.session_state.raw_data.framework.unique()
