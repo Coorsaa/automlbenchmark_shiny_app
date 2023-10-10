@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import requests
 
+from navigation import create_sidebar_page_navigation, Navigation
+
 __version__ = "0.2"
 _repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
 
@@ -19,21 +21,8 @@ def configure_streamlit():
 
 if __name__ == "__main__":
     configure_streamlit()
-    with st.sidebar:
-        st.title("AutoML-Benchmark Analysis App")
-        st.write("---")
-        tabs = st.radio(
-            label="Page Navigation",
-            options=(
-                "Overview",
-                "Analysis",
-            ),
-            horizontal=True,
-        )
-        st.write("---")
-        st.markdown("## Parameters")
-
-    if tabs == "Overview":
+    tabs = create_sidebar_page_navigation()
+    if tabs == Navigation.OVERVIEW:
         with st.sidebar:
             with st.form("user_inputs"):
                 # streamlit side panel (input forms)
@@ -49,8 +38,7 @@ if __name__ == "__main__":
         if "raw_data" in st.session_state:
             st.dataframe(st.session_state.raw_data)
 
-
-    if tabs == "Analysis" and "raw_data" in st.session_state:
+    if tabs == Navigation.ANALYSIS and "raw_data" in st.session_state:
         frameworks = st.session_state.raw_data.framework.unique()
         with st.sidebar:
             selected_frameworks = st.multiselect(
