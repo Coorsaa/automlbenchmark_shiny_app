@@ -2,11 +2,14 @@ import streamlit as st
 import pandas as pd
 import requests
 
+__version__ = "0.2"
+_repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
+
 st.set_page_config(
-    page_title=f"AutoML-Benchmark Analysis App - v0.2",
+    page_title=f"AutoML-Benchmark Analysis App - v{__version__}",
     menu_items={
-        "Get help": "https://github.com/",
-        "Report a bug": "https://github.com/",
+        "Get help": f"{_repository}",
+        "Report a bug": f"{_repository}/issues/new",
     },
 )
 
