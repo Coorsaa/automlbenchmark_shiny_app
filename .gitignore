@@ -1,1 +1,5 @@
 *.dcf
+venv/
+.idea/
+__pycache__
+
