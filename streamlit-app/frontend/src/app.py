@@ -4,6 +4,7 @@ import pandas as pd
 
 from navigation import create_sidebar_page_navigation, Navigation
 from shiny import display_shiny_app
+from pareto import inference_vs_performance_pareto
 
 __version__ = "0.2"
 _repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
