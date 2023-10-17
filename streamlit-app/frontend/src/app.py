@@ -1,3 +1,4 @@
+from pathlib import Path
 import streamlit as st
 import pandas as pd
 
@@ -17,6 +18,12 @@ def configure_streamlit():
             "Report a bug": f"{_repository}/issues/new",
         },
     )
+
+def load_default_dataset():
+    """Loads the 2023 results file."""
+    filepath = Path("/data/amlb_all.csv")
+    if filepath.exists():
+        st.session_state.raw_data = pd.read_csv(filepath)
 
 
 def create_file_input():
@@ -44,6 +51,7 @@ def show_overview():
 
 if __name__ == "__main__":
     configure_streamlit()
+    load_default_dataset()
     tabs = create_sidebar_page_navigation()
     if tabs == Navigation.OVERVIEW:
         create_file_input()
