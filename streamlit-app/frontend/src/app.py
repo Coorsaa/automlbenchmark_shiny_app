@@ -4,6 +4,8 @@ import pandas as pd
 
 from navigation import create_sidebar_page_navigation, Navigation
 from shiny import display_shiny_app
+import seaborn
+from error_plot import plot_errors
 from pareto import inference_vs_performance_pareto
 
 __version__ = "0.2"
@@ -27,6 +29,19 @@ def load_default_dataset():
         st.session_state.raw_data = pd.read_csv(filepath)
 
 
+def show_seaborn_plot():
+    """Demo"""
+    import matplotlib.pyplot as plt
+    xs=list(range(10))
+    ys=list(x**2 for x in xs)
+    fig, ax = plt.subplots()
+    seaborn.lineplot(x=xs, y=ys, ax=ax)
+    st.pyplot(fig)
+
+def show_error_plot():
+    fig = plot_errors(st.session_state.raw_data)
+    st.pyplot(fig)
+
 def create_file_input():
     """Creates a file input which may store a dataframe under session_state.raw_data."""
     with st.sidebar:
@@ -48,6 +63,7 @@ def show_overview():
         st.text("Please upload a result file from the sidebar on the left.")
         return
     st.dataframe(st.session_state.raw_data)
+    show_error_plot()
 
 
 if __name__ == "__main__":

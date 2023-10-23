@@ -13,3 +13,6 @@ services:
     restart: on-failure:5
     volumes:
       - .:/app
+      # This will point to a public file in the future, but for now this makes
+      # local iteration just a bit easier.
+      - ~/repositories/amlb-results/data:/data
