@@ -52,15 +52,16 @@ def show_error_plot():
 def create_file_input():
     """Creates a file input which may store a dataframe under session_state.raw_data."""
     with st.sidebar:
-        with st.form("user_inputs"):
-            # streamlit side panel (input forms)
-            st.markdown("### Data")
-            raw_data = st.file_uploader(
-                label="Upload your data here:", accept_multiple_files=False
-            )
-            upload_file = st.form_submit_button("Upload Files")
+        # streamlit side panel (input forms)
+        raw_data = st.file_uploader(
+            label='Select a results file:',
+            # label_visibility='collapsed',
+            accept_multiple_files=False,
+            type="csv",
+            help="Any results file produced by AMLB 2.1 or later.",
+        )
 
-        if upload_file:
+        if raw_data:
             st.session_state.raw_data = pd.read_csv(raw_data)
 
 
