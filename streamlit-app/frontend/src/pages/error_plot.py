@@ -3,8 +3,30 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import streamlit as st
 
-from data_processing import get_print_friendly_name
+st.set_page_config(page_title="Errors", page_icon="😪")
+
+
+def get_print_friendly_name(name: str, extras: dict[str, str] = None) -> str:
+    if extras is None:
+        extras = {}
+
+    frameworks = {
+        "AutoGluon_benchmark": "AutoGluon(B)",
+        "AutoGluon_hq": "AutoGluon(HQ)",
+        "AutoGluon_hq_il001": "AutoGluon(HQIL)",
+        "GAMA_benchmark": "GAMA(B)",
+        "mljarsupervised_benchmark": "MLJAR(B)",
+        "mljarsupervised_perform": "MLJAR(P)",
+    }
+    budgets = {
+        "1h8c_gp3": "1 hour",
+        "4h8c_gp3": "4 hours",
+    }
+    print_friendly_names = (frameworks | budgets | extras)
+    return print_friendly_names.get(name, name)
+
 
 TIMEOUT_PATTERN = re.compile("Interrupting thread MainThread \[ident=\d+\] after \d+s timeout.")
 def is_timeout(message: str) -> bool:
@@ -157,3 +179,7 @@ def plot_errors(results: pd.DataFrame):
     ax.legend(loc="upper right")
     ax.set_title("Error types by framework")
     return fig
+
+
+fig = plot_errors(st.session_state.filtered_data)
+st.pyplot(fig)
