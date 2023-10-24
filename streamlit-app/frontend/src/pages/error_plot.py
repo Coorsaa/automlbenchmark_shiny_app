@@ -181,5 +181,5 @@ def plot_errors(results: pd.DataFrame):
     return fig
 
 
-fig = plot_errors(st.session_state.filtered_data)
+fig = plot_errors(st.session_state.filtered_results)
 st.pyplot(fig)

@@ -61,3 +61,10 @@ def show_tables():
         filtered_datasets = dataframe_explorer(st.session_state.metadataset, case=False)
         st.dataframe(filtered_datasets, use_container_width=True)
         st.session_state.filtered_metadataset = filtered_datasets
+
+def get_filtered_results():
+    """Combines the filtered datasets with the filtered results."""
+    # st.session_state.filtered_results
+    # where task in
+    # st.session_state.filtered_metadataset
+    pass
