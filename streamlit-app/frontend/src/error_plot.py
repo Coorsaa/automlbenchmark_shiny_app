@@ -97,6 +97,7 @@ def classify_error(message: str):
     return "unknown"
 
 def plot_errors(results: pd.DataFrame):
+    print("naness:", results.isna().any())
     results = results.copy()
     results["framework"] = results["framework"].apply(get_print_friendly_name)
     results = results[results["framework"] != "NaiveAutoML"]
@@ -125,8 +126,11 @@ def plot_errors(results: pd.DataFrame):
         "rerun": "#999999",
         "investigate": "#cccccc",
         "fixed": "#fe9900",
+        "unknown": "#000000",
     }
-    assert all(error in color_by_error_type for error in error_types)
+    colors = set(error_types) - set(color_by_error_type)
+    print( "colors",colors)
+    assert not colors, f"{colors}"
     color_by_error_type = {k: v for k, v in color_by_error_type.items() if
                            k in error_types}
 
