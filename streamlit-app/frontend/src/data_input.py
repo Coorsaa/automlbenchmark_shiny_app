@@ -16,7 +16,16 @@ def _load_default_results():
     """Loads the 2023 results file."""
     filepath = Path("/data/amlb_all.csv")
     if filepath.exists():
-        st.session_state.raw_data = pd.read_csv(filepath)
+        categorical = {
+            feature: "category"
+            for feature in [
+                "id", "task", "framework", "constraint", "type", "metric", "mode", "app_version"
+            ]
+        }
+        st.session_state.raw_data = pd.read_csv(
+            filepath,
+            dtype=categorical,
+        )
         st.session_state.filtered_results = st.session_state.raw_data
 
 
