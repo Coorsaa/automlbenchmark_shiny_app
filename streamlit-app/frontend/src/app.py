@@ -31,7 +31,4 @@ if __name__ == "__main__":
     configure_streamlit()
     create_sidebar()
     initialize_data()
-    show_tables()
-
-    # if tabs == Navigation.ANALYSIS and "raw_data" in st.session_state:
-    #     display_shiny_app()
+    show_tables(expanded=True)

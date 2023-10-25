@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Errors", page_icon="😪")
+st.set_page_config(page_title="Errors", page_icon="😪", layout="wide")
 
 
 def get_print_friendly_name(name: str, extras: dict[str, str] = None) -> str:
@@ -180,6 +180,10 @@ def plot_errors(results: pd.DataFrame):
     ax.set_title("Error types by framework")
     return fig
 
-
-fig = plot_errors(st.session_state.filtered_results)
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).parent.parent.parent))
+from src.data_input import get_filtered_results, show_tables
+fig = plot_errors(get_filtered_results())
 st.pyplot(fig)
+show_tables()
