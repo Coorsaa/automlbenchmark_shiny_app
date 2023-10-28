@@ -48,12 +48,19 @@ def histogram_option_controls(dataset: pd.DataFrame, name: str):
 def _add_axis_control(dataset: pd.DataFrame, axis_name: str, container_name: str):
     """Adds controls to select, crop, and scale data along an axis."""
     suffix = f"{axis_name}_{container_name}"
+
     left, right = st.columns([0.8, 0.2])
     with left:
+        index_selected = 0
+        widget_key = f"column_{suffix}"
+        options = dataset.select_dtypes(include="number").columns
+        if selected_value := st.session_state.get(widget_key):
+            index_selected = list(options).index(selected_value)
         column_name = st.selectbox(
             f"{axis_name.upper()}-axis",
-            dataset.select_dtypes(include="number").columns,
-            key=f"column_{suffix}",
+            options,
+            key=widget_key,
+            index=index_selected,
         )
 
     # Ugly hack vertically align the checkbox with the selectbox.

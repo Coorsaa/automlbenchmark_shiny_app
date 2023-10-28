@@ -2,7 +2,7 @@ from typing import NamedTuple
 import streamlit as st
 from data_input import show_tables, initialize_data
 from sidebar import create_sidebar
-from pages.datasets import show_figure, histogram_option_controls
+from pages.histogram import show_figure, histogram_option_controls
 
 __version__ = "0.2"
 _repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
