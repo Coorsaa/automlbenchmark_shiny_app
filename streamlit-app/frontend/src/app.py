@@ -2,7 +2,7 @@ from typing import NamedTuple
 import streamlit as st
 from data_input import show_tables, initialize_data
 from sidebar import create_sidebar
-from pages.datasets import show_figure, picker
+from pages.datasets import show_figure, histogram_option_controls
 
 __version__ = "0.2"
 _repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
@@ -73,9 +73,9 @@ if __name__ == "__main__":
             data = st.session_state.filtered_metadataset if st.session_state[f"source_{i}"] == "Datasets" else st.session_state.filtered_results
             plot_container = st.container()
             with st.expander("Plot Options", expanded=True):
-                picker(data, name=f"container_{i}")
+                histogram_option_controls(data, name=f"container_{i}")
             show_figure(
                 data,
-                container,
-          )
+                Container(window=container, name=f"container_{i}"),
+            )
 

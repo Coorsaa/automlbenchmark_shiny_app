@@ -41,7 +41,43 @@ def histplot(data: pd.DataFrame, column: str, log_scale: int = 10):
     return ax
 
 
-def picker(dataset: pd.DataFrame, name: str):
+def histogram_option_controls(dataset: pd.DataFrame, name: str):
+    _add_axis_control(dataset, axis_name="x", container_name=f"{name}")
+
+
+def _add_axis_control(dataset: pd.DataFrame, axis_name: str, container_name: str):
+    """Adds controls to select, crop, and scale data along an axis."""
+    suffix = f"{axis_name}_{container_name}"
+    left, right = st.columns([0.8, 0.2])
+    with left:
+        column_name = st.selectbox(
+            f"{axis_name.upper()}-axis",
+            dataset.select_dtypes(include="number").columns,
+            key=f"column_{suffix}",
+        )
+
+    # Ugly hack vertically align the checkbox with the selectbox.
+    with right:
+        st.write(" ")
+        st.write(" ")
+        scale_log = st.checkbox(
+            "Log",
+            value=False,
+            key=f"log_{suffix}",
+        )
+
+    _, middle, _ = st.columns([0.02, 0.88, 0.1])
+    with middle:
+        st.slider(
+            "Range",
+            value=(dataset[column_name].min(), dataset[column_name].max()),
+            min_value=dataset[column_name].min(),
+            max_value=dataset[column_name].max(),
+            key=f"range_{suffix}",
+        )
+
+
+def _histogram_option_controls(dataset: pd.DataFrame, name: str):
     left, right = st.columns(2)
     with left:
         st.session_state.datasets_x_axis = st.selectbox(
@@ -87,16 +123,16 @@ def show_histogram(dataset: pd.DataFrame, x: str):
     return fig
 
 
-def show_figure(data, window):
-    if st.session_state.datasets_y_axis == "Count":
-        fig = show_histogram(
-            data,
-            x=st.session_state.datasets_x_axis,
-        )
-    else:
-        fig = scatter_plot(
-            data,
-            x=st.session_state.datasets_x_axis,
-            y=st.session_state.datasets_y_axis,
-        )
-    window.pyplot(fig)
+def show_figure(data, container):
+    # if st.session_state.datasets_y_axis == "Count":
+    fig = show_histogram(
+        data,
+        x=st.session_state[f"column_x_{container.name}"],
+    )
+    # else:
+    #     fig = scatter_plot(
+    #         data,
+    #         x=st.session_state.datasets_x_axis,
+    #         y=st.session_state.datasets_y_axis,
+    #     )
+    container.window.pyplot(fig)
