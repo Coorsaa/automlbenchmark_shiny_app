@@ -19,17 +19,41 @@ def configure_streamlit():
     )
 
 
+def create_visualization_container(column: int):
+    # the column is needed to ensure consistent but unique keys, which are required for
+    # the statefulness of the widgets.
+    container = st.container()
+    with container:
+        left, right, _ = st.columns(3)
+        with left:
+            _ = st.selectbox(
+                label="Kind",
+                options=["HISTOGRAM", "BAR", "SCATTER"],
+                key=f"kind_{column}",
+            )
+        with right:
+            _ = st.selectbox(
+                label="Source",
+                options=["RESULTS", "DATA"],
+                key=f"source_{column}",
+                # help="hello\n**markdown**\nbullet list\n * hello\n * boo\n\ngoobye",
+            )
+    return container
+
+
 if __name__ == "__main__":
     configure_streamlit()
     create_sidebar()
 
-    left, right = st.columns(2)
-    with left:
-        left_container = st.container()
-    with right:
-        chart_container = st.container()
+    columns = st.columns(2, gap="medium")
+    containers = []
+    for i, column in enumerate(columns):
+        with column:
+            container = create_visualization_container(i)
+            containers.append(container)
+
     initialize_data()
     show_tables(expanded=True)
     picker()
-    show_figure(st.session_state.filtered_metadataset, chart_container)
-    show_figure(st.session_state.filtered_metadataset, left_container)
+    show_figure(st.session_state.filtered_metadataset, containers[0])
+    show_figure(st.session_state.filtered_metadataset, containers[1])
