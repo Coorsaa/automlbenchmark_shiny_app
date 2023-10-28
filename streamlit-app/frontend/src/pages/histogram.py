@@ -42,7 +42,7 @@ def histplot(data: pd.DataFrame, column: str, log_scale: int = 10):
 
 
 def histogram_option_controls(dataset: pd.DataFrame, name: str):
-    _add_axis_control(dataset, axis_name="x", container_name=f"{name}")
+    _add_axis_control(dataset, axis_name="x", container_name=name)
 
 
 def _add_axis_control(dataset: pd.DataFrame, axis_name: str, container_name: str):

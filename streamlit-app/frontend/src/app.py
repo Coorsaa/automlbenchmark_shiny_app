@@ -70,10 +70,21 @@ if __name__ == "__main__":
             container = create_visualization_container(i)
             containers.append(Container(window=container, name=f"container_{i}"))
             # visualization_function = ... if ... if ...
-            data = st.session_state.filtered_metadataset if st.session_state[f"source_{i}"] == "Datasets" else st.session_state.filtered_results
+            data = st.session_state.filtered_metadataset if st.session_state.get(f"source_{i}") == "Datasets" else st.session_state.filtered_results
             plot_container = st.container()
+
+
+            if st.session_state[f"kind_{i}"].casefold() == "preset":
+                if st.session_state[f"preset_{i}"] == "1":
+                    data = st.session_state.filtered_metadataset
+                    st.session_state[f"column_x_container_{i}"] = "Number of Features"
+                if st.session_state[f"preset_{i}"] == "2":
+                    data = st.session_state.filtered_metadataset
+                    st.session_state[f"column_x_container_{i}"] = "Number of Instances"
+
             with st.expander("Plot Options", expanded=True):
                 histogram_option_controls(data, name=f"container_{i}")
+
             show_figure(
                 data,
                 Container(window=container, name=f"container_{i}"),
