@@ -4,9 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn
 
-features = ["NumberOfClasses", "NumberOfFeatures", "NumberOfInstances",
-            "NumberOfInstancesWithMissingValues", "NumberOfMissingValues",
-            "NumberOfSymbolicFeatures"]
+
 
 color_map = {"Regression": "#2ba02b", "Multiclass Classification": "#fa7f12", "Binary Classification": "#1f77b4"}
 
@@ -43,63 +41,30 @@ def histplot(data: pd.DataFrame, column: str, log_scale: int = 10):
     return ax
 
 
-def name_with_space(name: str) -> str:
-    words = re.findall(r"([A-Z][a-z]+)", name)
-    return ' '.join(
-        word if word not in ['Of', 'With'] else word.lower() for word in words)
-
-
-def determine_task_type(number_of_classes: int) -> str:
-    if number_of_classes == 2:
-        return "Binary Classification"
-    if number_of_classes > 2:
-        return "Multiclass Classification"
-    return "Regression"
-
-
-def picker(name: str):
+def picker(dataset: pd.DataFrame, name: str):
     left, right = st.columns(2)
     with left:
         st.session_state.datasets_x_axis = st.selectbox(
             'X-axis',
-            (
-                'Number of Classes',
-                'Number of Instances',
-                'Number of Features',
-            ),
+            dataset.select_dtypes(include="number").columns,
             key=f"x_axis_{name}",
         )
     with right:
         st.session_state.datasets_y_axis = st.selectbox(
             'Y-axis',
-            (
-                'Count',
-                'Number of Classes',
-                'Number of Instances',
-                'Number of Features',
-            ),
+            dataset.select_dtypes(include="number").columns,
             key=f"y_axis_{name}",
         )
 
 
-def scatter_plot(data, x, y):
-    datasets = data[features].rename(
-        columns={feature: name_with_space(feature) for feature in features}
-    )
-
-    datasets["type"] = datasets["Number of Classes"].apply(determine_task_type)
-    datasets["Percentage of Categorical Features"] = (datasets[
-                                                          "Number of Symbolic Features"] /
-                                                      datasets["Number of Features"]) * 100
-    datasets["Percentage of Missing Values"] = (datasets["Number of Missing Values"] / (
-                datasets["Number of Instances"] * datasets["Number of Features"])) * 100
+def scatter_plot(data, x, y, hue: str | None = None, hue_order: list[str] | None = None):
     fig = plt.figure()
     ax = seaborn.scatterplot(
-        datasets,
+        data,
         x=x,
         y=y,
-        hue="type",
-        hue_order=["Regression", "Multiclass Classification", "Binary Classification"],
+        hue=hue,
+        hue_order=hue_order,
         palette=color_map,
         s=60,
     )
@@ -116,20 +81,9 @@ def scatter_plot(data, x, y):
     return fig
 
 
-def show_histogram(metadata: pd.DataFrame, x: str):
-    datasets = metadata[features].rename(
-        columns={feature: name_with_space(feature) for feature in features}
-    )
-
-    datasets["type"] = datasets["Number of Classes"].apply(determine_task_type)
-    datasets["Percentage of Categorical Features"] = (datasets[
-                                                          "Number of Symbolic Features"] /
-                                                      datasets["Number of Features"]) * 100
-    datasets["Percentage of Missing Values"] = (datasets["Number of Missing Values"] / (
-                datasets["Number of Instances"] * datasets["Number of Features"])) * 100
-
+def show_histogram(dataset: pd.DataFrame, x: str):
     fig = plt.figure()
-    ax = histplot(datasets, column=x)
+    ax = histplot(dataset, column=x)
     return fig
 
 
@@ -146,7 +100,3 @@ def show_figure(data, window):
             y=st.session_state.datasets_y_axis,
         )
     window.pyplot(fig)
-
-#
-# picker()
-# show_figure(st.session_state.filtered_metadataset)

@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 import pandas as pd
 import streamlit as st
@@ -29,6 +30,20 @@ def _load_default_results():
         st.session_state.filtered_results = st.session_state.raw_data
 
 
+def _name_with_space(name: str) -> str:
+    words = re.findall(r"([A-Z][a-z]+)", name)
+    return ' '.join(
+        word if word not in ['Of', 'With'] else word.lower() for word in words)
+
+
+def _determine_task_type(number_of_classes: int) -> str:
+    if number_of_classes == 2:
+        return "Binary Classification"
+    if number_of_classes > 2:
+        return "Multiclass Classification"
+    return "Regression"
+
+
 def _load_default_metadata():
     filepath = Path("/Users/pietergijsbers/repositories/amlb-results/data/metadata.csv")
     if filepath.exists():
@@ -38,11 +53,32 @@ def _load_default_metadata():
                 "name", "status", "format",
             ]
         }
-        st.session_state.metadataset = pd.read_csv(
+        metadataset = pd.read_csv(
             filepath,
             dtype=categorical_features,
         )
-        st.session_state.filtered_metadataset = pd.read_csv(filepath)
+
+
+        features = ["NumberOfClasses", "NumberOfFeatures", "NumberOfInstances",
+                    "NumberOfInstancesWithMissingValues", "NumberOfMissingValues",
+                    "NumberOfSymbolicFeatures"]
+        datasets = metadataset[features].rename(
+            columns={feature: _name_with_space(feature) for feature in features}
+        )
+
+        datasets["type"] = datasets["Number of Classes"].apply(_determine_task_type)
+        datasets["Percentage of Categorical Features"] = (datasets[
+                                                              "Number of Symbolic Features"] /
+                                                          datasets[
+                                                              "Number of Features"]) * 100
+        datasets["Percentage of Missing Values"] = (datasets[
+                                                        "Number of Missing Values"] / (
+                                                            datasets[
+                                                                "Number of Instances"] *
+                                                            datasets[
+                                                                "Number of Features"])) * 100
+        st.session_state.metadataset = datasets
+        st.session_state.filtered_metadataset = datasets
 
 
 def create_file_input():
