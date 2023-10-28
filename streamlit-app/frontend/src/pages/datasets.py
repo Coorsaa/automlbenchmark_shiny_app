@@ -131,7 +131,7 @@ def show_histogram(metadata: pd.DataFrame, x: str):
     return fig
 
 
-def show_figure(data):
+def show_figure(data, window):
     if st.session_state.datasets_y_axis == "Count":
         fig = show_histogram(
             data,
@@ -143,8 +143,8 @@ def show_figure(data):
             x=st.session_state.datasets_x_axis,
             y=st.session_state.datasets_y_axis,
         )
-    st.pyplot(fig)
+    window.pyplot(fig)
 
-
-picker()
-show_figure(st.session_state.filtered_metadataset)
+#
+# picker()
+# show_figure(st.session_state.filtered_metadataset)

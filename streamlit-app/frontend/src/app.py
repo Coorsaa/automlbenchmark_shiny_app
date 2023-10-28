@@ -1,15 +1,7 @@
-from pathlib import Path
 import streamlit as st
-import pandas as pd
-
-from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
-from streamlit_extras.dataframe_explorer import dataframe_explorer
-
 from data_input import show_tables, initialize_data
-from sidebar import Navigation, create_sidebar
-from shiny import display_shiny_app
-import seaborn
-from pareto import inference_vs_performance_pareto
+from sidebar import create_sidebar
+from pages.datasets import show_figure, picker
 
 __version__ = "0.2"
 _repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
@@ -30,5 +22,14 @@ def configure_streamlit():
 if __name__ == "__main__":
     configure_streamlit()
     create_sidebar()
+
+    left, right = st.columns(2)
+    with left:
+        left_container = st.container()
+    with right:
+        chart_container = st.container()
     initialize_data()
     show_tables(expanded=True)
+    picker()
+    show_figure(st.session_state.filtered_metadataset, chart_container)
+    show_figure(st.session_state.filtered_metadataset, left_container)
