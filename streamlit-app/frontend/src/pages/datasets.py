@@ -57,7 +57,7 @@ def determine_task_type(number_of_classes: int) -> str:
     return "Regression"
 
 
-def picker():
+def picker(name: str):
     left, right = st.columns(2)
     with left:
         st.session_state.datasets_x_axis = st.selectbox(
@@ -66,7 +66,8 @@ def picker():
                 'Number of Classes',
                 'Number of Instances',
                 'Number of Features',
-            )
+            ),
+            key=f"x_axis_{name}",
         )
     with right:
         st.session_state.datasets_y_axis = st.selectbox(
@@ -76,7 +77,8 @@ def picker():
                 'Number of Classes',
                 'Number of Instances',
                 'Number of Features',
-            )
+            ),
+            key=f"y_axis_{name}",
         )
 
 

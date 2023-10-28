@@ -10,7 +10,6 @@ class Navigation(StrEnum):
 
 
 def create_sidebar():
-    # create_page_navigation()
     create_file_input()
 
 def create_page_navigation():

@@ -1,3 +1,4 @@
+from typing import NamedTuple
 import streamlit as st
 from data_input import show_tables, initialize_data
 from sidebar import create_sidebar
@@ -5,6 +6,11 @@ from pages.datasets import show_figure, picker
 
 __version__ = "0.2"
 _repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
+
+
+class Container(NamedTuple):
+    window: "st.DeltaGenerator"
+    name: str
 
 
 def configure_streamlit():
@@ -26,18 +32,26 @@ def create_visualization_container(column: int):
     with container:
         left, right, _ = st.columns(3)
         with left:
-            _ = st.selectbox(
+            kind = st.selectbox(
                 label="Kind",
-                options=["HISTOGRAM", "BAR", "SCATTER"],
+                options=["Histogram", "Bar", "Scatter", "Preset"],
                 key=f"kind_{column}",
             )
         with right:
-            _ = st.selectbox(
-                label="Source",
-                options=["RESULTS", "DATA"],
-                key=f"source_{column}",
-                # help="hello\n**markdown**\nbullet list\n * hello\n * boo\n\ngoobye",
-            )
+            if kind.casefold() == "preset":
+                _ = st.selectbox(
+                    label="Figure",
+                    options=["1", "2"],
+                    key=f"preset_{column}",
+                    # help="hello\n**markdown**\nbullet list\n * hello\n * boo\n\ngoobye",
+                )
+            else:
+                _ = st.selectbox(
+                    label="Source",
+                    options=["RESULTS", "DATA"],
+                    key=f"source_{column}",
+                    # help="hello\n**markdown**\nbullet list\n * hello\n * boo\n\ngoobye",
+                )
     return container
 
 
@@ -46,14 +60,22 @@ if __name__ == "__main__":
     create_sidebar()
 
     columns = st.columns(2, gap="medium")
+
+    initialize_data()
+    show_tables(expanded=True)
+
     containers = []
     for i, column in enumerate(columns):
         with column:
             container = create_visualization_container(i)
-            containers.append(container)
+            containers.append(Container(window=container, name=f"container_{i}"))
+            # visualization_function = ... if ... if ...
+            # data  = ... if source ...
+            plot_container = st.container()
+            with st.expander("Plot Options", expanded=True):
+                picker(name=f"container_{i}")
+            show_figure(
+                st.session_state.filtered_metadataset,
+                container,
+          )
 
-    initialize_data()
-    show_tables(expanded=True)
-    picker()
-    show_figure(st.session_state.filtered_metadataset, containers[0])
-    show_figure(st.session_state.filtered_metadataset, containers[1])
