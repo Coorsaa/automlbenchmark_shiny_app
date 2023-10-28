@@ -58,23 +58,26 @@ def determine_task_type(number_of_classes: int) -> str:
 
 
 def picker():
-    st.session_state.datasets_x_axis = st.selectbox(
-        'X-axis',
-        (
-            'Number of Classes',
-            'Number of Instances',
-            'Number of Features',
+    left, right = st.columns(2)
+    with left:
+        st.session_state.datasets_x_axis = st.selectbox(
+            'X-axis',
+            (
+                'Number of Classes',
+                'Number of Instances',
+                'Number of Features',
+            )
         )
-    )
-    st.session_state.datasets_y_axis = st.selectbox(
-        'Y-axis',
-        (
-            'Count',
-            'Number of Classes',
-            'Number of Instances',
-            'Number of Features',
+    with right:
+        st.session_state.datasets_y_axis = st.selectbox(
+            'Y-axis',
+            (
+                'Count',
+                'Number of Classes',
+                'Number of Instances',
+                'Number of Features',
+            )
         )
-    )
 
 
 def scatter_plot(data, x, y):
