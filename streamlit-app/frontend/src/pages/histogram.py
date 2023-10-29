@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn
+from .widgets import _add_persistent_selectbox, _add_axis_control
 
 
 
@@ -43,18 +44,6 @@ def histplot(data: pd.DataFrame, column: str, hue: str | None = None, log_scale:
     return ax
 
 
-def _add_persistent_selectbox(label: str, key: str, options: list):
-    """Add a selectbox which is persistent even if it is not always rendered."""
-    index_selected = 0
-    if selected_value := st.session_state.get(key):
-        index_selected = list(options).index(selected_value)
-    return st.selectbox(
-        label=label,
-        options=options,
-        key=key,
-        index=index_selected,
-    )
-
 
 def histogram_option_controls(dataset: pd.DataFrame, name: str):
     _add_axis_control(dataset, axis_name="x", container_name=name)
@@ -65,38 +54,6 @@ def histogram_option_controls(dataset: pd.DataFrame, name: str):
         key=f"hue_{name}",
     )
 
-
-def _add_axis_control(dataset: pd.DataFrame, axis_name: str, container_name: str):
-    """Adds controls to select, crop, and scale data along an axis."""
-    suffix = f"{axis_name}_{container_name}"
-
-    left, right = st.columns([0.8, 0.2])
-    with left:
-        column_name = _add_persistent_selectbox(
-            label=f"{axis_name.upper()}-axis",
-            key=f"column_{suffix}",
-            options=dataset.select_dtypes(include="number").columns,
-        )
-
-    # Ugly hack vertically align the checkbox with the selectbox.
-    with right:
-        st.write(" ")
-        st.write(" ")
-        scale_log = st.checkbox(
-            "Log",
-            value=False,
-            key=f"log_{suffix}",
-        )
-
-    _, middle, _ = st.columns([0.02, 0.88, 0.1])
-    with middle:
-        st.slider(
-            "Range",
-            value=(dataset[column_name].min(), dataset[column_name].max()),
-            min_value=dataset[column_name].min(),
-            max_value=dataset[column_name].max(),
-            key=f"range_{suffix}",
-        )
 
 
 def _histogram_option_controls(dataset: pd.DataFrame, name: str):
