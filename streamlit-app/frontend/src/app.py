@@ -2,6 +2,7 @@ from typing import NamedTuple
 import streamlit as st
 from data_input import show_tables, initialize_data
 from sidebar import create_sidebar
+from pages.plotting import presets
 from pages.histogram import show_figure, histogram_option_controls
 from pages.scatter_plots import scatterplot_option_controls, show_scatterplot
 
@@ -29,6 +30,9 @@ def configure_streamlit():
 def create_visualization_container(column: int):
     # the column is needed to ensure consistent but unique keys, which are required for
     # the statefulness of the widgets.
+    def _set_visualization_type(from_widget: str):
+        st.session_state[f"vis_{from_widget}"] = st.session_state[from_widget]
+
     container = st.container()
     with container:
         left, right, _ = st.columns(3)
@@ -37,12 +41,15 @@ def create_visualization_container(column: int):
                 label="Kind",
                 options=["Histogram", "Bar", "Scatter", "Preset"],
                 key=f"kind_{column}",
+                on_change=_set_visualization_type,
+                args=(f"kind_{column}",),
             )
+            st.session_state[f"vis_kind_{column}"] = kind
         with right:
             if kind.casefold() == "preset":
                 _ = st.selectbox(
                     label="Figure",
-                    options=["1", "2"],
+                    options=presets,
                     key=f"preset_{column}",
                     # help="hello\n**markdown**\nbullet list\n * hello\n * boo\n\ngoobye",
                 )
@@ -75,27 +82,26 @@ if __name__ == "__main__":
             plot_container = st.container()
 
             if st.session_state[f"kind_{i}"].casefold() == "preset":
-                if st.session_state[f"preset_{i}"] == "1":
-                    data = st.session_state.filtered_metadataset
-                    st.session_state[f"column_x_container_{i}"] = "Number of Features"
-                    st.session_state[f"hue_container_{i}"] = "type"
-                if st.session_state[f"preset_{i}"] == "2":
-                    data = st.session_state.filtered_metadataset
-                    st.session_state[f"column_x_container_{i}"] = "Number of Instances"
-                    st.session_state[f"hue_container_{i}"] = "type"
+                settings = presets[st.session_state[f"preset_{i}"]]
+                data = st.session_state[settings["data"]]
+                st.session_state[f"column_x_container_{i}"] = settings["x"]
+                if "y" in settings:
+                    st.session_state[f"column_y_container_{i}"] = settings["y"]
+                st.session_state[f"hue_container_{i}"] = settings["hue"]
+                st.session_state[f"vis_kind_{i}"] = settings["kind"]
 
             with st.expander("Plot Options", expanded=True):
-                if st.session_state[f"kind_{i}"].casefold() == "histogram":
+                if st.session_state[f"vis_kind_{i}"].casefold() == "histogram":
                     histogram_option_controls(data, name=f"container_{i}")
-                if st.session_state[f"kind_{i}"].casefold() == "scatter":
+                if st.session_state[f"vis_kind_{i}"].casefold() == "scatter":
                     scatterplot_option_controls(data, name=f"container_{i}")
 
-            if st.session_state[f"kind_{i}"].casefold() == "histogram":
+            if st.session_state[f"vis_kind_{i}"].casefold() == "histogram":
                 show_figure(
                     data,
                     Container(window=container, name=f"container_{i}"),
                 )
-            if st.session_state[f"kind_{i}"].casefold() == "scatter":
+            if st.session_state[f"vis_kind_{i}"].casefold() == "scatter":
                 show_scatterplot(
                     data,
                     Container(window=container, name=f"container_{i}")
