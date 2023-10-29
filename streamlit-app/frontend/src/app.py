@@ -89,6 +89,8 @@ if __name__ == "__main__":
                     st.session_state[f"column_y_container_{i}"] = settings["y"]
                 st.session_state[f"hue_container_{i}"] = settings["hue"]
                 st.session_state[f"vis_kind_{i}"] = settings["kind"]
+                if "log_x" in settings:
+                    st.session_state[f"log_x_container_{i}"] = settings["log_x"]
 
             with st.expander("Plot Options", expanded=True):
                 if st.session_state[f"vis_kind_{i}"].casefold() == "histogram":

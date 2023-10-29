@@ -65,5 +65,6 @@ def show_figure(data, container):
         data,
         column=st.session_state[f"column_x_{container.name}"],
         hue=st.session_state[f"hue_{container.name}"],
+        log_scale=st.session_state[f"log_x_{container.name}"],
     )
     container.window.pyplot(fig)

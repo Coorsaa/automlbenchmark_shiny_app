@@ -27,14 +27,11 @@ def _add_axis_control(dataset: pd.DataFrame, axis_name: str, container_name: str
             options=dataset.select_dtypes(include="number").columns,
         )
 
-    # Ugly hack vertically align the checkbox with the selectbox.
     with right:
-        st.write(" ")
-        st.write(" ")
-        scale_log = st.checkbox(
+        _add_persistent_selectbox(
             "Log",
-            value=False,
             key=f"log_{suffix}",
+            options=[None, 2, 10],
         )
 
     _, middle, _ = st.columns([0.02, 0.88, 0.1])
