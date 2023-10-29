@@ -73,14 +73,15 @@ if __name__ == "__main__":
             data = st.session_state.filtered_metadataset if st.session_state.get(f"source_{i}") == "Datasets" else st.session_state.filtered_results
             plot_container = st.container()
 
-
             if st.session_state[f"kind_{i}"].casefold() == "preset":
                 if st.session_state[f"preset_{i}"] == "1":
                     data = st.session_state.filtered_metadataset
                     st.session_state[f"column_x_container_{i}"] = "Number of Features"
+                    st.session_state[f"hue_container_{i}"] = "type"
                 if st.session_state[f"preset_{i}"] == "2":
                     data = st.session_state.filtered_metadataset
                     st.session_state[f"column_x_container_{i}"] = "Number of Instances"
+                    st.session_state[f"hue_container_{i}"] = "type"
 
             with st.expander("Plot Options", expanded=True):
                 histogram_option_controls(data, name=f"container_{i}")

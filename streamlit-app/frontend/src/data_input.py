@@ -66,7 +66,7 @@ def _load_default_metadata():
             columns={feature: _name_with_space(feature) for feature in features}
         )
 
-        datasets["type"] = datasets["Number of Classes"].apply(_determine_task_type)
+        datasets["type"] = datasets["Number of Classes"].apply(_determine_task_type).astype("category")
         datasets["Percentage of Categorical Features"] = (datasets[
                                                               "Number of Symbolic Features"] /
                                                           datasets[

@@ -16,15 +16,17 @@ def with_large_text(ax, xlabel: str, ylabel: str, title: str):
     ax.tick_params(axis='both', which='both', labelsize=18)
 
 
-def histplot(data: pd.DataFrame, column: str, log_scale: int = 10):
+def histplot(data: pd.DataFrame, column: str, hue: str | None = None, log_scale: int = 10):
     multiple_types = data["type"].nunique() > 1
+    hue_order = None if hue != "type" else ["Regression", "Multiclass Classification", "Binary Classification"]
+
     ax = seaborn.histplot(
         data,
         x=column,
-        hue="type",
+        hue=hue,
         multiple="stack",
         log_scale=log_scale,
-        hue_order=["Regression", "Multiclass Classification", "Binary Classification"],
+        hue_order=hue_order,
         palette=color_map,
         shrink=0.8,  # allow some horizontal space between bars
         linewidth=0,  # don't draw lines on edges
@@ -43,6 +45,18 @@ def histplot(data: pd.DataFrame, column: str, log_scale: int = 10):
 
 def histogram_option_controls(dataset: pd.DataFrame, name: str):
     _add_axis_control(dataset, axis_name="x", container_name=name)
+
+    widget_name = f"hue_{name}"
+    index_selected = 0
+    options = [None] + list(dataset.select_dtypes(include="category").columns)
+    if selected_value := st.session_state.get(widget_name):
+        index_selected = list(options).index(selected_value)
+    st.selectbox(
+        label="hue",
+        options=options,
+        key=widget_name,
+        index=index_selected,
+    )
 
 
 def _add_axis_control(dataset: pd.DataFrame, axis_name: str, container_name: str):
@@ -124,22 +138,16 @@ def scatter_plot(data, x, y, hue: str | None = None, hue_order: list[str] | None
     return fig
 
 
-def show_histogram(dataset: pd.DataFrame, x: str):
+def show_histogram(dataset: pd.DataFrame, x: str, hue):
     fig = plt.figure()
-    ax = histplot(dataset, column=x)
+    ax = histplot(dataset, column=x, hue=hue)
     return fig
 
 
 def show_figure(data, container):
-    # if st.session_state.datasets_y_axis == "Count":
     fig = show_histogram(
         data,
         x=st.session_state[f"column_x_{container.name}"],
+        hue=st.session_state[f"hue_{container.name}"],
     )
-    # else:
-    #     fig = scatter_plot(
-    #         data,
-    #         x=st.session_state.datasets_x_axis,
-    #         y=st.session_state.datasets_y_axis,
-    #     )
     container.window.pyplot(fig)
