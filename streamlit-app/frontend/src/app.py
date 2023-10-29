@@ -3,6 +3,7 @@ import streamlit as st
 from data_input import show_tables, initialize_data
 from sidebar import create_sidebar
 from pages.histogram import show_figure, histogram_option_controls
+from pages.scatter_plots import scatterplot_option_controls, show_scatterplot
 
 __version__ = "0.2"
 _repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
@@ -84,10 +85,19 @@ if __name__ == "__main__":
                     st.session_state[f"hue_container_{i}"] = "type"
 
             with st.expander("Plot Options", expanded=True):
-                histogram_option_controls(data, name=f"container_{i}")
+                if st.session_state[f"kind_{i}"].casefold() == "histogram":
+                    histogram_option_controls(data, name=f"container_{i}")
+                if st.session_state[f"kind_{i}"].casefold() == "scatter":
+                    scatterplot_option_controls(data, name=f"container_{i}")
 
-            show_figure(
-                data,
-                Container(window=container, name=f"container_{i}"),
-            )
+            if st.session_state[f"kind_{i}"].casefold() == "histogram":
+                show_figure(
+                    data,
+                    Container(window=container, name=f"container_{i}"),
+                )
+            if st.session_state[f"kind_{i}"].casefold() == "scatter":
+                show_scatterplot(
+                    data,
+                    Container(window=container, name=f"container_{i}")
+                )
 
