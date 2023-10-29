@@ -43,19 +43,26 @@ def histplot(data: pd.DataFrame, column: str, hue: str | None = None, log_scale:
     return ax
 
 
+def _add_persistent_selectbox(label: str, key: str, options: list):
+    """Add a selectbox which is persistent even if it is not always rendered."""
+    index_selected = 0
+    if selected_value := st.session_state.get(key):
+        index_selected = list(options).index(selected_value)
+    return st.selectbox(
+        label=label,
+        options=options,
+        key=key,
+        index=index_selected,
+    )
+
+
 def histogram_option_controls(dataset: pd.DataFrame, name: str):
     _add_axis_control(dataset, axis_name="x", container_name=name)
 
-    widget_name = f"hue_{name}"
-    index_selected = 0
-    options = [None] + list(dataset.select_dtypes(include="category").columns)
-    if selected_value := st.session_state.get(widget_name):
-        index_selected = list(options).index(selected_value)
-    st.selectbox(
-        label="hue",
-        options=options,
-        key=widget_name,
-        index=index_selected,
+    _add_persistent_selectbox(
+        label="Hue",
+        options=[None] + list(dataset.select_dtypes(include="category").columns),
+        key=f"hue_{name}",
     )
 
 
@@ -65,16 +72,10 @@ def _add_axis_control(dataset: pd.DataFrame, axis_name: str, container_name: str
 
     left, right = st.columns([0.8, 0.2])
     with left:
-        index_selected = 0
-        widget_key = f"column_{suffix}"
-        options = dataset.select_dtypes(include="number").columns
-        if selected_value := st.session_state.get(widget_key):
-            index_selected = list(options).index(selected_value)
-        column_name = st.selectbox(
-            f"{axis_name.upper()}-axis",
-            options,
-            key=widget_key,
-            index=index_selected,
+        column_name = _add_persistent_selectbox(
+            label=f"{axis_name.upper()}-axis",
+            key=f"column_{suffix}",
+            options=dataset.select_dtypes(include="number").columns,
         )
 
     # Ugly hack vertically align the checkbox with the selectbox.
@@ -138,16 +139,11 @@ def scatter_plot(data, x, y, hue: str | None = None, hue_order: list[str] | None
     return fig
 
 
-def show_histogram(dataset: pd.DataFrame, x: str, hue):
-    fig = plt.figure()
-    ax = histplot(dataset, column=x, hue=hue)
-    return fig
-
-
 def show_figure(data, container):
-    fig = show_histogram(
+    fig = plt.figure()
+    histplot(
         data,
-        x=st.session_state[f"column_x_{container.name}"],
+        column=st.session_state[f"column_x_{container.name}"],
         hue=st.session_state[f"hue_{container.name}"],
     )
     container.window.pyplot(fig)
