@@ -1,21 +1,27 @@
 from pathlib import Path
 import re
+import logging
 
 import pandas as pd
 import streamlit as st
 from streamlit_extras.dataframe_explorer import dataframe_explorer
 
+logger = logging.getLogger(__file__)
 
-def initialize_data():
+def initialize_data(data_dir: Path):
     if "raw_data" not in st.session_state:
-        _load_default_results()
+        _load_default_results(data_dir)
+        if "raw_data" not in st.session_state:
+            logger.warning("No default dataset loaded.")
     if "metadataset" not in st.session_state:
-        _load_default_metadata()
+        _load_default_metadata(data_dir)
+        if "metadataset" not in st.session_state:
+            logger.warning("No default metadata loaded.")
 
 
-def _load_default_results():
+def _load_default_results(data_directory: Path):
     """Loads the 2023 results file."""
-    filepath = Path("/Users/pietergijsbers/repositories/amlb-results/data/amlb_all.csv")
+    filepath = data_directory / "amlb_all.csv"
     if filepath.exists():
         categorical_features = {
             feature: "category"
@@ -44,8 +50,8 @@ def _determine_task_type(number_of_classes: int) -> str:
     return "Regression"
 
 
-def _load_default_metadata():
-    filepath = Path("/Users/pietergijsbers/repositories/amlb-results/data/metadata.csv")
+def _load_default_metadata(data_directory: Path):
+    filepath = data_directory / "metadata.csv"
     if filepath.exists():
         categorical_features = {
             feature: "category"
@@ -107,12 +113,12 @@ def show_tables(expanded: bool = False):
     with st.expander("Filter Results", expanded=expanded):
         df = st.session_state.raw_data
         df['framework'] = df['framework'].astype('category')
-        filtered_results = dataframe_explorer(df, case=False, key="results")
+        filtered_results = dataframe_explorer(df, case=False)
         st.dataframe(filtered_results, use_container_width=True)
         st.session_state.filtered_results = filtered_results
 
     with st.expander("Filter Datasets", expanded=expanded):
-        filtered_datasets = dataframe_explorer(st.session_state.metadataset, case=False, key="metadata")
+        filtered_datasets = dataframe_explorer(st.session_state.metadataset, case=False)
         st.dataframe(filtered_datasets, use_container_width=True)
         st.session_state.filtered_metadataset = filtered_datasets
 

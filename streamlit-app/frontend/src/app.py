@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import NamedTuple
 import streamlit as st
 from data_input import show_tables, initialize_data
@@ -69,7 +70,7 @@ if __name__ == "__main__":
 
     columns = st.columns(2, gap="medium")
 
-    initialize_data()
+    initialize_data(Path("~/Documents/data/amlb/").expanduser())
     show_tables(expanded=True)
 
     containers = []
