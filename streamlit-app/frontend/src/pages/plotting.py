@@ -58,4 +58,12 @@ presets = {
     "2": {
 
     },
+    # Whisper-plot of inference speed (a: disk, b: in-memory)
+    "6": {
+
+    },
+    # Whisper-plot of training duration (a: 1 hour, b: 4 hour)
+    "9": {
+
+    },
 }
