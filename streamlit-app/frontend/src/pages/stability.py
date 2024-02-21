@@ -139,7 +139,7 @@ def generate_error_table():
     error_counts = error_counts.fillna(0)
     return error_counts
 
-def plot_error_type_by_framework(error_counts):
+def plot_error_type_by_framework(error_counts, include_types: list[str]):
     frameworks = error_counts.groupby("framework").sum()["info"].sort_values(ascending=False).index
     error_types = error_counts["error_type"].unique()
     color_by_error_type = {
@@ -246,7 +246,22 @@ if __name__ == "__main__":
         )
 
     r = generate_error_table()
-    plot_error_type_by_framework(r)
+    left, right = st.columns([0.7, 0.3])
+    with right:
+        error_types_bar = st.multiselect(
+            label="Include Error Types:",
+            options=r["error_type"].unique(),
+            default=r["error_type"].unique(),
+        )
+        frameworks_bar = st.multiselect(
+            label="Include Frameworks:",
+            options=r["framework"].unique(),
+            default=r["framework"].unique(),
+        )
+    with left:
+        r = r[r["error_type"].isin(error_types_bar)]
+        r = r[r["framework"].isin(frameworks_bar)]
+        plot_error_type_by_framework(r, include_types=error_types_bar)
     st.write(
         """
         ## Training Duration
