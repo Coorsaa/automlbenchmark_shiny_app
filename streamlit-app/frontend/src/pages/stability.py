@@ -137,7 +137,59 @@ def generate_error_table():
     error_counts = pd.concat([error_counts, all_combinations]).drop_duplicates(subset=["error_type", "framework"],
                                                                                keep='first')
     error_counts = error_counts.fillna(0)
-    return error_counts
+    return error_counts, with_errors
+
+def plot_error_by_task(with_errors, at_least:int):
+    errors_by_task = with_errors[~with_errors["error_type"].isin(["investigate", "implementation"])].groupby("task").count()["info"]
+    metadata = st.session_state.filtered_metadataset
+    metadata = metadata.drop("type", axis=1)
+    all_results = metadata.set_index("name").join(errors_by_task)
+    all_results = all_results.fillna(0)
+    all_results = all_results.rename(columns=dict(info="count"))
+    errors = all_results[all_results["count"] > 0].copy()
+    no_errors = all_results[all_results["count"] == 0].copy()
+
+    fig, ax = plt.subplots()
+
+    errors["marker_size"] = errors["count"].apply(
+        lambda c: 10 if c < 3 else (30 if c < 11 else (60 if c < 51 else 100)))
+    classification = errors[errors["Number of Classes"] > 0]
+    classification = classification[classification["count"]>=at_least]
+    regression = errors[errors["Number of Classes"] == 0]
+    regression = regression[regression["count"]>=at_least]
+
+    if at_least == 0:
+        ax.scatter(no_errors["Number of Instances"], no_errors["Number of Features"], color="#555555", s=1, label="No Error")
+    ax.scatter(regression["Number of Instances"], regression["Number of Features"], color="#32a02d",
+               s=regression["marker_size"], label="Regression", edgecolors="white", linewidths=.5)
+    ax.scatter(classification["Number of Instances"], classification["Number of Features"], color="#2078b4",
+               s=classification["marker_size"], label="Classification", edgecolors="white", linewidths=.5)
+
+    # ax.scatter(0, 0, color="#ffffff", s=60, label="$\hspace{2}$ Error Counts:")
+    ax.scatter(0, 0, color="#000000", s=10, label="$\leq$ 2")
+    ax.scatter(0, 0, color="#000000", s=30, label="in [3, 10]")
+    ax.scatter(0, 0, color="#000000", s=60, label="in [11, 50]")
+    ax.scatter(0, 0, color="#000000", s=100, label="$\geq$50")
+
+    ax.set_xscale("log")
+    ax.set_xlabel("Instances")
+    # We want to explicitly set limits based on the whole dataset,
+    # moving axes are very misleading
+    ax.set_xlim([1e2,1e8])
+    ax.set_ylim([1, 1e5])
+    ax.set_yscale("log")
+    ax.set_ylabel("Features")
+    ax.set_title("Number of Errors by Data Dimensions")
+
+    # lgnd = plt.legend(loc="upper right", scatterpoints=1, fontsize=10)
+    # lgnd.legend_handles[0]._sizes = [20]
+
+    handles, labels = ax.get_legend_handles_labels()
+    leg = fig.legend(handles=handles[:3], labels=labels[:3], bbox_to_anchor=(0.9, 0.88), title="Type (color)")
+    leg._legend_box.align = "left"
+    leg = fig.legend(handles=handles[3:], labels=labels[3:], bbox_to_anchor=(0.9, 0.68), title="Count (size)")
+    leg._legend_box.align = "left"
+    st.pyplot(fig)
 
 def plot_error_type_by_framework(error_counts, include_types: list[str]):
     frameworks = error_counts.groupby("framework").sum()["info"].sort_values(ascending=False).index
@@ -245,7 +297,7 @@ if __name__ == "__main__":
             """
         )
 
-    r = generate_error_table()
+    r, l = generate_error_table()
     left, right = st.columns([0.7, 0.3])
     with right:
         error_types_bar = st.multiselect(
@@ -262,6 +314,32 @@ if __name__ == "__main__":
         r = r[r["error_type"].isin(error_types_bar)]
         r = r[r["framework"].isin(frameworks_bar)]
         plot_error_type_by_framework(r, include_types=error_types_bar)
+
+    left, right = st.columns([0.4, 0.6])
+    with left:
+        error_types_scatter = st.multiselect(
+            label="Include Error Types:",
+            options=r["error_type"].unique(),
+            default=r["error_type"].unique(),
+            key="error_types_scatter",
+        )
+        frameworks_scatter = st.multiselect(
+            label="Include Frameworks:",
+            options=r["framework"].unique(),
+            default=r["framework"].unique(),
+            key="framework_scatter",
+        )
+        minimal_error_count = st.slider(
+            "Minimal error count:",
+            min_value=0,
+            max_value=50,
+            value=0,
+            step=1,
+        )
+    with right:
+        l = l[l["error_type"].isin(error_types_scatter)]
+        l = l[l["framework"].isin(frameworks_scatter)]
+        plot_error_by_task(l, minimal_error_count)
     st.write(
         """
         ## Training Duration

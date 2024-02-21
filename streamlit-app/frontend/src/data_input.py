@@ -39,7 +39,7 @@ def _load_default_results(data_directory: Path):
 def _name_with_space(name: str) -> str:
     words = re.findall(r"([A-Z][a-z]+)", name)
     return ' '.join(
-        word if word not in ['Of', 'With'] else word.lower() for word in words)
+        word if word not in ['Of', 'With'] else word.lower() for word in words) if words else name
 
 
 def _determine_task_type(number_of_classes: int) -> str:
@@ -67,7 +67,7 @@ def _load_default_metadata(data_directory: Path):
 
         features = ["NumberOfClasses", "NumberOfFeatures", "NumberOfInstances",
                     "NumberOfInstancesWithMissingValues", "NumberOfMissingValues",
-                    "NumberOfSymbolicFeatures"]
+                    "NumberOfSymbolicFeatures", "name"]
         datasets = metadataset[features].rename(
             columns={feature: _name_with_space(feature) for feature in features}
         )
