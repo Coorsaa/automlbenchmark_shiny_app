@@ -7,6 +7,8 @@ packages = c(
   "shinyWidgets",
   "markdown",
   "shinythemes",
+  "shinybusy",
+  "shinycssloaders",
   "DT",
   "dplyr",
   "tidyr",
@@ -36,6 +38,10 @@ bioc_packages = c(
   "psychotree",
   "psychotools"
 )
+
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(version = "3.17")
 
 for (p in bioc_packages) {
   if (!requireNamespace(p, quietly = TRUE))

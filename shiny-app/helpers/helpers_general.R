@@ -30,17 +30,17 @@ replaceMissingsByConstantPredictor = function(data, ms) {
 
   # x <<- data
 
-  fw = levels(droplevels(data$framework))
-  impute_scores = data %>%
-    pivot_wider(id_cols = c(id, task, fold, type), names_from = framework, values_from = !!ms)
+  # fw = levels(droplevels(data$framework))
+  # impute_scores = data %>%
+  #   pivot_wider(id_cols = c(id, task, fold, type), names_from = framework, values_from = !!ms)
 
-  for (f in fw) {
-    impute_scores[is.na(impute_scores[[f]]), f] = impute_scores[is.na(impute_scores[[f]]), "constantpredictor"]
-  }
+  # for (f in fw) {
+  #   impute_scores[is.na(impute_scores[[f]]), f] = impute_scores[is.na(impute_scores[[f]]), "constantpredictor"]
+  # }
 
-  data = impute_scores %>%
-    pivot_longer(cols = fw, names_to = "framework", values_to = ms, values_drop_na = FALSE)
-  data$framework = as.factor(data$framework)
+  # data = impute_scores %>%
+  #   pivot_longer(cols = fw, names_to = "framework", values_to = ms, values_drop_na = FALSE)
+  # data$framework = as.factor(data$framework)
 
-  return(data)
+  # return(data)
 }

@@ -231,7 +231,7 @@ overview_plot_data = reactive({
   d = d[d$framework %in% fw,]
   d$framework = droplevels(d$framework)
   d = removeDuplicates(d, ms)
-  d = replaceMissingsByConstantPredictor(d, ms)
+  #d = replaceMissingsByConstantPredictor(d, ms)
 
   if (aggregate == TRUE) {
     d = d %>%
