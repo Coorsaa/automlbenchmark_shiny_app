@@ -436,7 +436,10 @@ if __name__ == "__main__":
             
             Additionally, if an AutoML framework crashes during training it can not also crash during inference, 
             because that is no longer run. So, even if a hypothetical framework would crash 50% of the time during
-            training and 50% during inference, you would expect only half as many failures during inference time.
+            training, if it reaches the inference stage crash 50% of the time during inference, you would expect 
+            only half as many failures during inference time as during training.
+            
+            ADD CLARIFYING FIGURE
             """
         )
 
