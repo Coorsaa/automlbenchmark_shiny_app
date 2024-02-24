@@ -1,4 +1,23 @@
+from pathlib import Path
+
 import streamlit as st
+
+
+from data_input import initialize_data
+
+__version__ = "0.2"
+_repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
+
+def configure_streamlit():
+    """Sets the streamlit page configuration."""
+    st.set_page_config(
+        page_title=f"AutoML-Benchmark Analysis App - v{__version__}",
+        menu_items={
+            "Get help": f"{_repository}",
+            "Report a bug": f"{_repository}/issues/new",
+        },
+        layout="wide",
+    )
 
 st.write(
     """# About This App
@@ -37,3 +56,6 @@ we will commit to correcting any factual mistakes or adding clarifications where
 If you are interested in contributing, please let us know (on Github), we would love to help get you started.
 """
 )
+
+if __name__ == "__main__":
+    initialize_data(Path("~/Documents/data/amlb/").expanduser())
