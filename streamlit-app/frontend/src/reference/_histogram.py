@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn
-from .plotting import with_large_text, task_type_colormap
-from .widgets import _add_persistent_selectbox, _add_axis_control
+from ._plotting import with_large_text, task_type_colormap
+from ._widgets import _add_persistent_selectbox, _add_axis_control
 
 
 def histplot(data: pd.DataFrame, column: str, hue: str | None = None, log_scale: int = 10):

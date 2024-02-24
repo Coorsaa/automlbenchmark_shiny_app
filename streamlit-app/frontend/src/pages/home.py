@@ -8,7 +8,9 @@ st.write(
     please open a Github issue. We welcome contributions.
     
 This app allows you to further inspect the results presented in the JMLR paper
-"AMLB: an AutoML Benchmark". It includes all the figures of the paper, with some
+"AMLB: an AutoML Benchmark". The paper discusses the benchmark design and its limitations,
+and contextualizes the results. We strongly encourage you to first read the paper before
+drawing any conclusions. This app includes all the figures of the paper, with some
 additional controls which let you look at specific aspects of the data:
 """)
 
