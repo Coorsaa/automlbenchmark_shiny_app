@@ -172,3 +172,124 @@ with left:
     plot_inference_barplot(results, constraint="1h8c_gp3", col="infer_batch_size_df_1")
 with right:
     st.write("controls")
+
+st.write("Inference and Performance")
+def calculate_pareto(xs, ys) -> list[tuple[float, float]]:
+    pairs = set(zip(xs, ys))
+    return [
+        (x, y)
+        for x, y in pairs
+        # check below is only correct because `pairs` is a set, so never x==x2 *and* y==y2
+        if not any((x2>=x and y2 >=y) and (x!=x2 or y!=y2) for x2, y2 in pairs)
+    ]
+
+
+def impute_results(results: pd.DataFrame, where: pd.Series, with_: str = "constantpredictor",
+                   indicator_column: str = "imputed") -> pd.DataFrame:
+    """Impute result column of `results`, `where_` a condition holds true, `with_` the result of another framework.
+
+    results: pd.DataFrame
+      Regular AMLB results dataframe, must have columns "framework", "task", "fold", "constraint", and "result".
+    where: pd.Series
+      A logical index into `results` that defines the row where "result" should be imputed.
+    with_: str
+      The name of the "framework" which should be used to determine the value to impute with.
+    indicator_column: str, optional
+      The name of the column where a boolean will mark whether or not the "result" value of the row was imputed.
+
+    Returns a copy of the original dataframe with imputed results.
+    """
+    if with_ not in results["framework"].unique():
+        raise ValueError(f"{with_=} is not in `results`")
+    results = results.copy()
+
+    if indicator_column and indicator_column not in results.columns:
+        results[indicator_column] = False
+
+    lookup_table = results.set_index(["framework", "task", "fold", "constraint"])
+    for index, row in results[where].iterrows():
+        task, fold, constraint = row[["task", "fold", "constraint"]]
+        results.loc[index, "result"] = lookup_table.loc[(with_, task, fold, constraint)].result
+        if indicator_column:
+            results.loc[index, indicator_column] = True
+    return results
+
+def preprocess_data(results):
+    results = impute_results(
+        results,
+        where=results["result"].isna(),
+        with_="constantpredictor",
+    )
+    results = impute_results(
+        results,
+        where=results["result"].isna(),
+        with_="constantpredictor",
+    )
+    mean_results = (results[
+        ["framework", "task", "constraint", "metric", "result", "imputed", "infer_batch_size_file_10000"]])
+    mean_results["task"] = mean_results["task"].astype('object')
+    mean_results["metric"] = mean_results["metric"].astype('object')
+    mean_results["framework"] = mean_results["framework"].astype('object')
+    mean_results["constraint"] = mean_results["constraint"].astype('object')
+    mean_results = mean_results.groupby(
+        ["framework", "task", "constraint", "metric"], as_index=False).agg(
+        {
+            "result": "mean",
+            "infer_batch_size_file_10000": "mean",
+            "imputed": "sum"
+        }
+    )
+    lookup = mean_results.set_index(["framework", "task", "constraint"])
+    for index, row in mean_results.iterrows():
+        lower = lookup.loc[("RandomForest", row["task"], row["constraint"]), "result"]
+        upper = lookup.loc[(slice(None), row["task"], row["constraint"]), "result"].max()
+        if lower == upper:
+            mean_results.loc[index, "scaled"] = float("nan")
+        else:
+            mean_results.loc[index, "scaled"] = (row["result"] - lower) / (upper - lower)
+    return mean_results
+
+def plot_pareto(data, x, y, ax, color="#cccccc"):
+    pareto = sorted(calculate_pareto(data[x], data[y]))
+    for opt, next_opt in zip(pareto, pareto[1:]):
+        ax.plot([opt[0], opt[0], next_opt[0]], [opt[1],next_opt[1], next_opt[1]], color=color, zorder=0)
+
+def plot_scatter(mean_results, constraint, metric, time_budget):
+    ttype = {"neg_rmse": "regression", "auc": "binary classification", "neg_logloss": "multiclass classification"}[metric]
+    exclude = ["constantpredictor", "RandomForest", "TunedRandomForest", "TPOT"]
+    if ttype == "regression":
+        exclude += ["autosklearn2"]
+
+    data = mean_results[~mean_results["framework"].isin(exclude)]
+    data = data[(data["constraint"] == constraint)  & (data["metric"] == metric)]
+    data = data.groupby(["framework", "constraint", "metric"])[["infer_batch_size_file_10000", "scaled"]].median()
+    data["row_per_s"] = 10_000. / data["infer_batch_size_file_10000"]
+    color_map = {k: v for k, v in FRAMEWORK_TO_COLOR.items() if k not in exclude}
+
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3))
+    ax = seaborn.scatterplot(
+        data,
+        x="row_per_s",
+        y="scaled",
+        hue="framework",
+        palette=color_map,
+        s=70,  # marker size
+        ax=ax,
+    )
+    plot_pareto(data, x="row_per_s", y="scaled", ax=ax)
+    ax.set_title(f"{ttype} {time_budget}")
+    ax.set_xscale('log')
+    ax.set_xlabel('median rows per second')
+    ax.set_ylabel('median scaled performance')
+    seaborn.move_legend(ax, "upper right", bbox_to_anchor=(1.6, 1))
+    st.pyplot(fig)
+
+results = st.session_state.filtered_results.copy()
+results["framework"] = results["framework"].apply(get_print_friendly_name)
+mr = preprocess_data(results)
+metric=st.selectbox(
+    label="metric",
+    options=["neg_rmse", "neg_logloss", "auc"],
+    index=0,
+)
+plot_scatter(mr, "1h8c_gp3",metric, "1 hour")
