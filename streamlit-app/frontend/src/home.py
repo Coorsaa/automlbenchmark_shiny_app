@@ -22,18 +22,25 @@ def configure_streamlit():
 st.write(
     """# About This App
     
-    !!! Important !!!
+    ⚠️ Warning
     This app was not part of the JMLR peer review process. If you find any mistakes,
     please open a Github issue. We welcome contributions.
+""")
+# st.markdown('<div style="color:blue;background-color:red;">hello</div>', unsafe_allow_html=True)
+st.write("""
     
 This app allows you to further inspect the results presented in the JMLR paper
-"AMLB: an AutoML Benchmark". The paper discusses the benchmark design and its limitations,
+"AMLB: an AutoML Benchmark" by Gijsbers et al. (2024). The paper discusses the benchmark design and its limitations,
 and contextualizes the results. We strongly encourage you to first read the paper before
 drawing any conclusions. This app includes all the figures of the paper, with some
 additional controls which let you look at specific aspects of the data:
 """)
 
-st.page_link("https://google.com", label=" * Figure 1: Benchmarking Suite")
+st.page_link("home.py", label=" * Figure 1: Benchmarking Suite")
+st.page_link("pages/cd_diagram.py", label=" * Figure 2: Critical Difference Diagrams")
+st.page_link("home.py", label=" * Figure 3 and 4: Scaled Performance Boxplots")
+st.page_link("home.py", label=" * Figure 5: Bradley-Terry Trees")
+st.page_link("pages/inference.py", label=" * Figure 6 and 7: Model Inference Time")
 st.page_link("pages/stability.py", label=" * Figure 8 and 9: Errors and training duration.")
 
 st.write("""The data this app visualizes is available at ___ and ___.""")
