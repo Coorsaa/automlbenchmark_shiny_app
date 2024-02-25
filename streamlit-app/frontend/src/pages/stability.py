@@ -4,26 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
-def get_print_friendly_name(name: str, extras: dict[str, str] = None) -> str:
-    # Copied from https://github.com/PGijsbers/amlb-results/blob/main/notebooks/data_processing.py
-    if extras is None:
-        extras = {}
-
-    frameworks = {
-        "AutoGluon_benchmark": "AutoGluon(B)",
-        "AutoGluon_hq": "AutoGluon(HQ)",
-        "AutoGluon_hq_il001": "AutoGluon(HQIL)",
-        "GAMA_benchmark": "GAMA(B)",
-        "mljarsupervised_benchmark": "MLJAR(B)",
-        "mljarsupervised_perform": "MLJAR(P)",
-    }
-    budgets = {
-        "1h8c_gp3": "1 hour",
-        "4h8c_gp3": "4 hours",
-    }
-    print_friendly_names = (frameworks | budgets | extras)
-    return print_friendly_names.get(name, name)
+from core.data import get_print_friendly_name, is_old
 
 
 def generate_error_table():
@@ -262,15 +243,6 @@ def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9)
         "TunedRandomForest": '#c4a484',
     }
 
-    def is_old(framework: str, constraint: str, metric: str) -> bool:
-        """Encodes the table in `raw_to_clean.ipynb`"""
-        if framework == "TunedRandomForest":
-            return True
-        if constraint == "1h8c_gp3":
-            return False
-        if framework in ["autosklearn2", "GAMA(B)", "TPOT"]:
-            return True
-        return framework == "MLJAR(B)" and metric != "neg_rmse"
 
     if add_counts and (add_counts != "outliers" and not isinstance(add_counts, dict)):
         raise ValueError("`add_counts` must be 'outliers' or a dictionary mapping each framework to a number.")
@@ -328,7 +300,6 @@ def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9)
         if add_counts != "outliers":
             print("Warning! Ylim is set but outliers are not reported.")
 
-    counts = []
     if add_counts:
         if add_counts == "outliers":
             add_counts = {}
@@ -353,8 +324,6 @@ def plot_train_duration_for_constraint(constraint: str, results):
 
     data["timeout"] = data["info"].apply(lambda msg: isinstance(msg, str) and "Interrupting thread MainThread" in msg)
     timeout_counts = dict(data[["framework", "timeout"]].groupby("framework").sum()["timeout"])
-    filename = f"train-duration-{constraint}.pdf".replace(" ", "-")
-    print("generating", filename)
 
     time_limit = 3600 if constraint == "1h8c_gp3" else 3600 * 4
     fig, ax = box_plot(

@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn
+from core.data import get_print_friendly_name, preprocess_data, impute_results, is_old
 
 FRAMEWORK_TO_COLOR = {
     "AutoGluon(B)": '#fe9900',
@@ -22,25 +23,6 @@ FRAMEWORK_TO_COLOR = {
     "TunedRandomForest": '#c4a484',
 }
 
-def get_print_friendly_name(name: str, extras: dict[str, str] = None) -> str:
-    # Copied from https://github.com/PGijsbers/amlb-results/blob/main/notebooks/data_processing.py
-    if extras is None:
-        extras = {}
-
-    frameworks = {
-        "AutoGluon_benchmark": "AutoGluon(B)",
-        "AutoGluon_hq": "AutoGluon(HQ)",
-        "AutoGluon_hq_il001": "AutoGluon(HQIL)",
-        "GAMA_benchmark": "GAMA(B)",
-        "mljarsupervised_benchmark": "MLJAR(B)",
-        "mljarsupervised_perform": "MLJAR(P)",
-    }
-    budgets = {
-        "1h8c_gp3": "1 hour",
-        "4h8c_gp3": "4 hours",
-    }
-    print_friendly_names = (frameworks | budgets | extras)
-    return print_friendly_names.get(name, name)
 
 def add_horizontal_lines(ax, lines: tuple[tuple[float, str], ...]):
     """Draws horizontal lines specified by (y value, color)-pairs."""
@@ -56,15 +38,7 @@ def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9)
     """
     if add_counts and (add_counts != "outliers" and not isinstance(add_counts, dict)):
         raise ValueError("`add_counts` must be 'outliers' or a dictionary mapping each framework to a number.")
-    def is_old(framework: str, constraint: str, metric: str) -> bool:
-        """Encodes the table in `raw_to_clean.ipynb`"""
-        if framework == "TunedRandomForest":
-            return True
-        if constraint == "1h8c_gp3":
-            return False
-        if framework in ["autosklearn2", "GAMA(B)", "TPOT"]:
-            return True
-        return framework == "MLJAR(B)" and metric != "neg_rmse"
+
     color_map = color_map or FRAMEWORK_TO_COLOR
     color_map = {k: v for k, v in color_map.items() if k in data["framework"].unique()}
     metric = metric or data.metric.unique()[0]
@@ -146,7 +120,7 @@ def plot_inference_barplot(results, constraint, col):
         data,
         metric="row/s",
         title=f"From-Disk Batch Inference Speed",
-        figsize=(6, 3),
+        figsize=(8, 4),
         add_counts=False,#timeout_counts,
         with_framework_names=True, # ttype == "regression",
     )
@@ -183,74 +157,6 @@ def calculate_pareto(xs, ys) -> list[tuple[float, float]]:
         if not any((x2>=x and y2 >=y) and (x!=x2 or y!=y2) for x2, y2 in pairs)
     ]
 
-
-def impute_results(results: pd.DataFrame, where: pd.Series, with_: str = "constantpredictor",
-                   indicator_column: str = "imputed") -> pd.DataFrame:
-    """Impute result column of `results`, `where_` a condition holds true, `with_` the result of another framework.
-
-    results: pd.DataFrame
-      Regular AMLB results dataframe, must have columns "framework", "task", "fold", "constraint", and "result".
-    where: pd.Series
-      A logical index into `results` that defines the row where "result" should be imputed.
-    with_: str
-      The name of the "framework" which should be used to determine the value to impute with.
-    indicator_column: str, optional
-      The name of the column where a boolean will mark whether or not the "result" value of the row was imputed.
-
-    Returns a copy of the original dataframe with imputed results.
-    """
-    if with_ not in results["framework"].unique():
-        raise ValueError(f"{with_=} is not in `results`")
-    results = results.copy()
-
-    if indicator_column and indicator_column not in results.columns:
-        results[indicator_column] = False
-
-    lookup_table = results.set_index(["framework", "task", "fold", "constraint"])
-    for index, row in results[where].iterrows():
-        task, fold, constraint = row[["task", "fold", "constraint"]]
-        results.loc[index, "result"] = lookup_table.loc[(with_, task, fold, constraint)].result
-        if indicator_column:
-            results.loc[index, indicator_column] = True
-    return results
-
-def preprocess_data(results):
-    results = impute_results(
-        results,
-        where=results["result"].isna(),
-        with_="constantpredictor",
-    )
-    autogluon_bug = results["info"].apply(
-        lambda v: isinstance(v, str) and "'NoneType' object has no attribute 'name'" in v)
-    results = impute_results(
-        results,
-        where=autogluon_bug,
-        with_="AutoGluon(HQ)",
-    )
-    mean_results = (results[
-        ["framework", "task", "constraint", "metric", "result", "imputed", "infer_batch_size_file_10000"]])
-    mean_results["task"] = mean_results["task"].astype('object')
-    mean_results["metric"] = mean_results["metric"].astype('object')
-    mean_results["framework"] = mean_results["framework"].astype('object')
-    mean_results["constraint"] = mean_results["constraint"].astype('object')
-    mean_results = mean_results.groupby(
-        ["framework", "task", "constraint", "metric"], as_index=False).agg(
-        {
-            "result": "mean",
-            "infer_batch_size_file_10000": "mean",
-            "imputed": "sum"
-        }
-    )
-    lookup = mean_results.set_index(["framework", "task", "constraint"])
-    for index, row in mean_results.iterrows():
-        lower = lookup.loc[("RandomForest", row["task"], row["constraint"]), "result"]
-        upper = lookup.loc[(slice(None), row["task"], row["constraint"]), "result"].max()
-        if lower == upper:
-            mean_results.loc[index, "scaled"] = float("nan")
-        else:
-            mean_results.loc[index, "scaled"] = (row["result"] - lower) / (upper - lower)
-    return mean_results
-
 def plot_pareto(data, x, y, ax, color="#cccccc"):
     pareto = sorted(calculate_pareto(data[x], data[y]))
     for opt, next_opt in zip(pareto, pareto[1:]):
@@ -268,7 +174,7 @@ def plot_scatter(mean_results, constraint, metric, time_budget):
     data["row_per_s"] = 10_000. / data["infer_batch_size_file_10000"]
     color_map = {k: v for k, v in FRAMEWORK_TO_COLOR.items() if k not in exclude}
 
-    fig, ax = plt.subplots(1, 1, figsize=(4, 3))
+    fig, ax = plt.subplots(1, 1, figsize=(8,8))
     ax = seaborn.scatterplot(
         data,
         x="row_per_s",
