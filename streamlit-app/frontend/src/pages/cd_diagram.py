@@ -100,15 +100,18 @@ constraint = st.selectbox(
 constraint = {"1 hour": "1h8c_gp3", "4 hours": "4h8c_gp3"}[constraint]
 ttype = st.selectbox(
     label="Task Type",
-    options=["Binary", "Multiclass", "Regression"],
+    options=["Binary", "Multiclass", "Regression", "All"],
     index=0,
 )
-metric = {"Binary": "auc", "Multiclass": "neg_logloss", "Regression": "neg_rmse"}[ttype]
+metric = {"Binary": ["auc"], "Multiclass": ["neg_logloss"], "Regression": ["neg_rmse"], "All": ["auc", "neg_logloss", "neg_rmse"]}[ttype]
 mean_results = st.session_state.filtered_results.copy()
 mean_results["framework"] = mean_results["framework"].apply(get_print_friendly_name)
 mean_results = preprocess_data(mean_results)
-mean_results = mean_results[~mean_results["framework"].isin(["autosklearn2","NaiveAutoML",])]
-mean_results = mean_results[(mean_results["constraint"] == constraint) & (mean_results["metric"] == metric)]
+frameworks_to_exclude = ["autosklearn2", "NaiveAutoML"]
+if "neg_rmse" in metric and constraint == "4h8c_gp3":
+    frameworks_to_exclude.extend(["MLJAR(P)", "AutoGluon(HQ)", "AutoGluon(HQIL)"])
+mean_results = mean_results[~mean_results["framework"].isin(frameworks_to_exclude)]
+mean_results = mean_results[(mean_results["constraint"] == constraint) & (mean_results["metric"].isin(metric))]
 mean_results = mean_results[["framework", "task", "result"]]
 mean_results = mean_results.pivot(index="task", columns="framework", values="result")
 result = autorank(
