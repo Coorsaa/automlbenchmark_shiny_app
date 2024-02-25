@@ -220,10 +220,12 @@ def preprocess_data(results):
         where=results["result"].isna(),
         with_="constantpredictor",
     )
+    autogluon_bug = results["info"].apply(
+        lambda v: isinstance(v, str) and "'NoneType' object has no attribute 'name'" in v)
     results = impute_results(
         results,
-        where=results["result"].isna(),
-        with_="constantpredictor",
+        where=autogluon_bug,
+        with_="AutoGluon(HQ)",
     )
     mean_results = (results[
         ["framework", "task", "constraint", "metric", "result", "imputed", "infer_batch_size_file_10000"]])
