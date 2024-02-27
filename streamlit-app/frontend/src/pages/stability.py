@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from core.data import get_print_friendly_name, is_old
-
+from core.visualization import FRAMEWORK_TO_COLOR
 
 def generate_error_table():
     import itertools
@@ -225,24 +225,6 @@ def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9)
     The figure's y-axis may be limited by `ylim` and the number of values outside this limit may be shown in the tick labels.
     """
     import seaborn
-    FRAMEWORK_TO_COLOR = {
-        "AutoGluon(B)": '#fe9900',
-        "AutoGluon(HQ)": '#fe7700',
-        "AutoGluon(HQIL)": '#fe5500',
-        "autosklearn": '#009f81',
-        "autosklearn2": '#00fccf',
-        "flaml": '#ff5aaf',
-        "GAMA(B)": '#8400cd',
-        "H2OAutoML": '#ffcb15',
-        "lightautoml": '#00c2f9',
-        "NaiveAutoML": '#c3c995',
-        "MLJAR(B)": '#ffb2fd',
-        "MLJAR(P)": '#ddb2fd',
-        "RandomForest": "#e20134",
-        "TPOT": '#9f0162',
-        "TunedRandomForest": '#c4a484',
-    }
-
 
     if add_counts and (add_counts != "outliers" and not isinstance(add_counts, dict)):
         raise ValueError("`add_counts` must be 'outliers' or a dictionary mapping each framework to a number.")
