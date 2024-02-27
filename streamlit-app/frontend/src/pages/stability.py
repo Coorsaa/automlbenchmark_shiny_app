@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from core.data import get_print_friendly_name, is_old
-from core.visualization import FRAMEWORK_TO_COLOR
+from core.visualization import FRAMEWORK_TO_COLOR, add_horizontal_lines
 
 def generate_error_table():
     import itertools
@@ -211,11 +211,6 @@ def plot_error_type_by_framework(error_counts, include_types: list[str]):
     ax.set_title("Error types by framework")
     st.pyplot(fig)
 
-
-def add_horizontal_lines(ax, lines: tuple[tuple[float, str], ...]):
-    """Draws horizontal lines specified by (y value, color)-pairs."""
-    for y, color in lines:
-        ax.axhline(y, color=color)
 
 
 def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9), with_framework_names=True,

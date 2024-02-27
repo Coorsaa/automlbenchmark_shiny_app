@@ -7,12 +7,6 @@ from core.data import get_print_friendly_name, preprocess_data, impute_results, 
 from core.visualization import FRAMEWORK_TO_COLOR
 
 
-def add_horizontal_lines(ax, lines: tuple[tuple[float, str], ...]):
-    """Draws horizontal lines specified by (y value, color)-pairs."""
-    for y, color in lines:
-        ax.axhline(y, color=color)
-
-
 def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9), with_framework_names=True,
              add_counts=None, color_map=None):
     """Creates a boxplot with data["frameworks"] on the x-axis and data[`metric`] on the y-axis

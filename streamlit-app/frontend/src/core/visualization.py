@@ -15,3 +15,8 @@ FRAMEWORK_TO_COLOR = {
     "TPOT": '#9f0162',
     "TunedRandomForest": '#c4a484',
 }
+
+def add_horizontal_lines(ax, lines: tuple[tuple[float, str], ...]):
+    """Draws horizontal lines specified by (y value, color)-pairs."""
+    for y, color in lines:
+        ax.axhline(y, color=color)

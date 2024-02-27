@@ -3,7 +3,7 @@ import seaborn
 import matplotlib.pyplot as plt
 from core.data import get_print_friendly_name, is_old, preprocess_data
 
-from core.visualization import FRAMEWORK_TO_COLOR
+from core.visualization import FRAMEWORK_TO_COLOR, add_horizontal_lines
 st.write("# Performance")
 
 
@@ -27,12 +27,6 @@ frameworks_to_exclude = ["RandomForest", "NaiveAutoML"]
 mean_results = mean_results[~mean_results["framework"].isin(frameworks_to_exclude)]
 mean_results = mean_results[(mean_results["constraint"] == constraint) & (mean_results["metric"].isin(metric))]
 # mean_results = mean_results[["framework", "task", "result"]]
-
-
-def add_horizontal_lines(ax, lines: tuple[tuple[float, str], ...]):
-    """Draws horizontal lines specified by (y value, color)-pairs."""
-    for y, color in lines:
-        ax.axhline(y, color=color)
 
 
 def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9), with_framework_names=True,
