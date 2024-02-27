@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn
 
 from core.data import get_print_friendly_name, is_old
-from core.visualization import FRAMEWORK_TO_COLOR, add_horizontal_lines
+from core.visualization import FRAMEWORK_TO_COLOR, add_horizontal_lines, box_plot
 
 def generate_error_table():
     import itertools
@@ -211,86 +211,6 @@ def plot_error_type_by_framework(error_counts, include_types: list[str]):
     ax.legend(loc="upper right")
     ax.set_title("Error types by framework")
     st.pyplot(fig)
-
-
-
-def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9), with_framework_names=True,
-             add_counts=None, color_map=None):
-    """Creates a boxplot with data["frameworks"] on the x-axis and data[`metric`] on the y-axis
-
-    The figure's y-axis may be limited by `ylim` and the number of values outside this limit may be shown in the tick labels.
-    """
-    if add_counts and (add_counts != "outliers" and not isinstance(add_counts, dict)):
-        raise ValueError("`add_counts` must be 'outliers' or a dictionary mapping each framework to a number.")
-
-    color_map = color_map or FRAMEWORK_TO_COLOR
-    color_map = {k: v for k, v in color_map.items() if k in data["framework"].unique()}
-
-    metric = metric or data.metric.unique()[0]
-    if metric.startswith("neg_"):
-        pos_metric = metric[len("neg_"):]
-        data[pos_metric], metric = -data[metric], pos_metric
-
-    fig, ax = plt.subplots(1, 1, figsize=figsize)
-    seaborn.boxplot(
-        data=data,
-        x="framework",
-        y=metric,
-        order=color_map,
-        hue="constraint" if data.constraint.nunique() > 1 else None,
-        palette=color_map if data.constraint.nunique() == 1 else None,
-        ax=ax,
-        fliersize=1,
-    )
-
-    if ylog:
-        ax.set_yscale("log")
-
-    ax.set_ylabel(metric, size='xx-large')
-    ax.set_xlabel("")
-    ax.tick_params(axis='both', which='both', labelsize=18)
-
-    if title:
-        ax.set_title(title, fontsize=18)
-
-    # Dirty hack for displaying outliers, we overlap minor and major tick labels, where
-    # minor labels are used to display the number of outliers, and major tick labels may
-    # be used to display the framework names.
-    constraint = data.constraint.unique()[0]
-    smetric = data.metric.unique()[0]
-    frameworks = color_map.keys()
-    frameworks = [
-        f"{fw if with_framework_names else ''}*" if is_old(fw, constraint, smetric) else fw
-        for fw in frameworks
-    ]
-    if add_counts:
-        # There will be minor tick labels displayed for outliers,
-        # to avoid rendering on top of each other, we offset the label location
-        # with a dirty hack of using leading spaces :-)
-        frameworks = [f"   {fw}" for fw in frameworks]
-    ax.tick_params(axis="x", which="major", rotation=-90)
-    ax.set_xticks(*zip(*enumerate(frameworks)))
-
-    if ylim:
-        ax.set_ylim(ylim)
-        if add_counts != "outliers":
-            print("Warning! Ylim is set but outliers are not reported.")
-
-    if add_counts:
-        if add_counts == "outliers":
-            add_counts = {}
-            for framework in color_map:
-                framework_outliers = data[(data["framework"] == framework) & (data[metric] < ylim[0])]
-                add_counts[framework] = f"{len(framework_outliers)}"
-
-        # We need to offset the minor tick labels, otherwise they won't render.
-        ax.set_xticks(
-            ticks=[i - 0.01 for i in range(len(color_map))],
-            labels=[f"[{add_counts.get(f, 'x')}]" for f in color_map],
-            minor=True
-        )
-
-    return fig, ax
 
 
 def plot_train_duration_for_constraint(constraint: str, results):
