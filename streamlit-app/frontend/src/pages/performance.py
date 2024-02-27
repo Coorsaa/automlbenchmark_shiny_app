@@ -126,3 +126,59 @@ fig, ax = box_plot(
 ax.set_ylabel("Scaled Performance")
 add_horizontal_lines(ax, ((0, periwinkle_blue),))
 st.pyplot(fig)
+
+
+mean_results = st.session_state.filtered_results.copy()
+mean_results = mean_results[~mean_results["framework"].isin(["NaiveAutoML"])]
+mean_results["task"] = mean_results["task"].astype('object')
+mean_results["metric"] = mean_results["metric"].astype('object')
+mean_results["framework"] = mean_results["framework"].astype('object')
+mean_results["constraint"] = mean_results["constraint"].astype('object')
+mean_results = mean_results[
+    ["framework", "task", "constraint", "metric", "result"]
+].groupby(["framework", "task", "constraint", "metric"], as_index=False).agg(
+    {"result": "mean"}
+)
+
+lookup = mean_results.set_index(["framework", "task", "constraint"])
+for index, row in mean_results.iterrows():
+    lower = lookup.loc[("RandomForest", row["task"], "1h8c_gp3"), "result"]
+    upper = lookup.loc[(slice(None), row["task"], slice(None)), "result"].max()
+    if lower == upper:
+        mean_results.loc[index, "scaled"] = float("nan")
+    else:
+        mean_results.loc[index, "scaled"] = (row["result"] - lower) / (upper - lower)
+
+fig, ax = plt.subplots(1, 1, figsize=(6,4))
+# The frameworks below are excluded because they do not have recent results for all of the benchmark and time constraints,
+# except constantpredictor which we exclude because it will predict the same regardless of constraint and so is not interesting.
+mean_results = mean_results[~mean_results.framework.str.lower().isin(
+    ["autogluon(hqil)", "tpot", "gama(b)", "constantpredictor", "randomforest", "mljar(p)"])
+]
+baselines = ["constantpredictor", "RandomForest", "TunedRandomForest"]
+
+seaborn.boxplot(
+    data=mean_results,
+    y="framework",
+    x="scaled",
+    hue="constraint",
+    ax=ax,
+    fliersize=1,
+    order=[
+        *sorted((f for f in mean_results.framework.unique() if f not in baselines), key=lambda f: f.lower()),
+        *sorted(b for b in baselines if b in mean_results.framework.unique()),
+    ]
+)
+ax.set_xlim([-2, 1])
+
+ax.set_xlabel("Scaled Performance", size='xx-large')
+ax.set_ylabel("")
+#ax.tick_params(axis="x", which="major", rotation=-70)
+ax.tick_params(axis='both', which = 'both', labelsize = 18)
+ax.set_title("Scaled performance after 1 and 4 hours", fontsize=18)
+
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles=handles, labels=["1 hour", "4 hours"], title="Time Constraint")
+seaborn.move_legend(ax, "upper right", bbox_to_anchor=(1.3, 1.02))
+
+st.pyplot(fig)
