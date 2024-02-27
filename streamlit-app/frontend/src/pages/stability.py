@@ -3,6 +3,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn
 
 from core.data import get_print_friendly_name, is_old
 from core.visualization import FRAMEWORK_TO_COLOR, add_horizontal_lines
@@ -219,8 +220,6 @@ def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9)
 
     The figure's y-axis may be limited by `ylim` and the number of values outside this limit may be shown in the tick labels.
     """
-    import seaborn
-
     if add_counts and (add_counts != "outliers" and not isinstance(add_counts, dict)):
         raise ValueError("`add_counts` must be 'outliers' or a dictionary mapping each framework to a number.")
 

@@ -1,6 +1,4 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn
 from core.data import get_print_friendly_name, preprocess_data, impute_results, is_old
