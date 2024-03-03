@@ -5,7 +5,31 @@ from core.data import get_print_friendly_name, is_old, preprocess_data
 
 from core.visualization import FRAMEWORK_TO_COLOR, add_horizontal_lines
 st.write("# Performance")
+st.write(
+    """
+    In our paper, instead of reporting AUC, log loss, or RMSE directly, we often use a "scaled performance" score instead.
+    Scaled performance for framework A on dataset D is determined by scaling its predictive score (log loss, rmse, auc)
+    between the Random Forest performance on D, at 0, and the best observed performance on D across all frameworks, at 1.
+    If a framework's score is lower than 0, this means it performed worse than our baseline Random Forest method.
+    """
+)
 
+with st.expander("Why scaled performance?"):
+    st.write(
+    """
+    We do this for three reasons:
+     
+     * The metrics are hard to evaluate at a glance. Is an AUC of 0.8 good? Maybe. 
+     What is good, and what is not, depends on the task. 
+     
+     * The metrics are not generally commensurable across different datasets. Averaging RMSE, which can differ orders of
+    magnitude across different tasks, may result in the average performance being dominated by the contribution of a single dataset.
+    
+     * Because we are comparing AutoML frameworks, we want something that is interpretable in the context of this comparison.
+       Scaling from Random Forest (0) to best observed (1) performance immediately lets you gauge how it compares relative
+       to the other frameworks.
+    """
+)
 
 constraint = st.selectbox(
     label="Time",
@@ -148,6 +172,11 @@ for index, row in mean_results.iterrows():
         mean_results.loc[index, "scaled"] = float("nan")
     else:
         mean_results.loc[index, "scaled"] = (row["result"] - lower) / (upper - lower)
+
+st.write("## The Effect of the Time Constraint \n"
+         "In the plot below, you can see that there is generally only marginal improvement when allowing for more time."
+         " In this case, the 'scaled performance' is slightly modified: 0 is the RF performance with a 4 hour budget, "
+         "and 1 is the best observed performance across any budget.")
 
 fig, ax = plt.subplots(1, 1, figsize=(6,4))
 # The frameworks below are excluded because they do not have recent results for all of the benchmark and time constraints,
