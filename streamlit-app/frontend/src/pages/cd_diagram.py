@@ -84,9 +84,3 @@ plot_stats(result, ax=ax)
 # from pages._copycd import cd_evaluation
 # _, fig = cd_evaluation(mean_results, maximize_metric=True)
 st.pyplot(fig)
-
-st.write("""
-Footnotes:
-
-1: Demšar, Janez. "Statistical comparisons of classifiers over multiple data sets." The Journal of Machine learning research 7 (2006): 1-30.
-""")
