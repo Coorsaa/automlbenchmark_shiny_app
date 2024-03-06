@@ -1,7 +1,7 @@
 import streamlit as st
 import seaborn
 import matplotlib.pyplot as plt
-from core.data import get_print_friendly_name, is_old, preprocess_data
+from core.data import get_print_friendly_name, is_old, preprocess_data, filter_results
 
 from core.visualization import FRAMEWORK_TO_COLOR, add_horizontal_lines
 st.write("# Performance")
@@ -30,27 +30,56 @@ with st.expander("Why scaled performance?"):
        to the other frameworks.
     """
 )
+left, right = st.columns([0.5, 0.5])
+with left:
+    constraint = st.selectbox(
+        label="Time",
+        options=["1 hour", "4 hours"],
+        index=0,
+    )
+    constraint = {"1 hour": "1h8c_gp3", "4 hours": "4h8c_gp3"}[constraint]
 
-constraint = st.selectbox(
-    label="Time",
-    options=["1 hour", "4 hours"],
-    index=0,
-)
-constraint = {"1 hour": "1h8c_gp3", "4 hours": "4h8c_gp3"}[constraint]
-ttype = st.selectbox(
-    label="Task Type",
-    options=["Binary", "Multiclass", "Regression"],
-    index=0,
-)
+with right:
+    ttype = st.selectbox(
+        label="Task Type",
+        options=["Binary", "Multiclass", "Regression"],
+        index=0,
+    )
 
 metric = {"Binary": ["auc"], "Multiclass": ["neg_logloss"], "Regression": ["neg_rmse"], "All": ["auc", "neg_logloss", "neg_rmse"]}[ttype]
+meta = st.session_state.metadataset.copy()
+tasks = st.session_state.raw_data["metric"].isin(metric)
+tasks = st.session_state.raw_data[tasks]["task"]
+keep = meta.name.isin(tasks)
+keep = meta[keep]
+with left:
+    n_range = (
+        keep["Number of Instances"].min(),
+        keep["Number of Instances"].max()
+    )
+    min_n, max_n = st.select_slider(
+        "Number of Instances",
+        options=sorted(keep["Number of Instances"].unique()),
+        value=n_range
+    )
+
+with right:
+    n_range = (
+        keep["Number of Features"].min(),
+        keep["Number of Features"].max()
+    )
+    min_p, max_p = st.select_slider(
+        "Number of Features",
+        options=sorted(keep["Number of Features"].unique()),
+        value=n_range
+    )
 mean_results = st.session_state.filtered_results.copy()
 mean_results["framework"] = mean_results["framework"].apply(get_print_friendly_name)
 mean_results = preprocess_data(mean_results)
 frameworks_to_exclude = ["RandomForest", "NaiveAutoML"]
 mean_results = mean_results[~mean_results["framework"].isin(frameworks_to_exclude)]
 mean_results = mean_results[(mean_results["constraint"] == constraint) & (mean_results["metric"].isin(metric))]
-# mean_results = mean_results[["framework", "task", "result"]]
+mean_results = filter_results(st.session_state.metadataset, mean_results, min_n=min_n, max_n=max_n, max_p=max_p, min_p=min_p)
 
 
 def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9), with_framework_names=True,

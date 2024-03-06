@@ -97,3 +97,18 @@ def is_old(framework: str, constraint: str, metric: str) -> bool:
     if framework in ["autosklearn2", "GAMA(B)", "TPOT"]:
         return True
     return framework == "MLJAR(B)" and metric != "neg_rmse"
+
+def filter_results(metadata: pd.DataFrame, results: pd.DataFrame, min_n: int = 0, max_n: int | None = None, min_p: int = 0, max_p: int | None = None):
+    # For whatever reason, directly indexing by the string name gives a KeyError
+    col_name ="Number of Instances"
+    filtered_meta = metadata[metadata[col_name] > min_n]
+    if max_n:
+        filtered_meta = filtered_meta[filtered_meta[col_name] <= max_n]
+    col_name = "Number of Features"
+    filtered_meta = filtered_meta[filtered_meta[col_name] > min_p]
+    if max_p:
+        filtered_meta = filtered_meta[filtered_meta[col_name] <= max_p]
+
+    return results[results.task.isin(filtered_meta.name)]
+
+
