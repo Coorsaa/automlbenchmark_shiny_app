@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn
 from core.data import get_print_friendly_name, preprocess_data, impute_results, is_old
 from core.visualization import FRAMEWORK_TO_COLOR, box_plot
-
+from core.ui import write_card, filters
 
 
 def plot_inference_barplot(results, constraint, col):
@@ -26,6 +26,20 @@ def plot_inference_barplot(results, constraint, col):
     st.pyplot(fig)
 
 st.write("# Inference Time")
+st.write(
+    """
+    Inference time denotes the time the model built by the AutoML framework takes to generate predictions.
+    How long inference takes depends on a lot of different factors, such as complexity of the models
+    (as a rule, large ensembles take more time than a linear model) as well as the underlying machine learning
+    libraries the different AutoML frameworks use.
+    """
+)
+write_card(
+    body="Many frameworks support optimizing models for inference speed before deployment. This functionality is "
+         "not used in this benchmark. Results are meant as a proxy and to demonstrate wide difference beyond just"
+         "model performance."
+)
+
 results = st.session_state.filtered_results.copy()
 results["framework"] = results["framework"].apply(get_print_friendly_name)
 results = results[~results["framework"].isin(["TPOT", "NaiveAutoML", "constantpredictor", "TunedRandomForest"])]

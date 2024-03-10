@@ -4,6 +4,8 @@ import streamlit as st
 
 
 from data_input import initialize_data
+from core.ui import write_card
+
 
 __version__ = "0.2"
 _repository = "https://github.com/Coorsaa/automlbenchmark_shiny_app/"
@@ -29,20 +31,11 @@ and contextualizes the results. We strongly encourage you to first read the pape
 drawing any conclusions. 
 """)
 
-with open("src/html/card.html", 'r') as fh:
-    card_html = fh.read()
-
-warning_html = card_html.replace(
-    "ICON", "⚠️"
-).replace(
-    "HEADER", "Important"
-).replace(
-    "BODY", """This app was not part of the JMLR peer review process. If you find any mistakes,
-please open a <a href="#">Github issue</a>. We welcome contributions."""
-)
-st.markdown(
-    warning_html,
-    unsafe_allow_html=True,
+write_card(
+    body= """This app was not part of the JMLR peer review process. If you find any mistakes,
+please open a <a href="#">Github issue</a>. We welcome contributions.""",
+   icon="Number Of Instances",
+    header="Important",
 )
 
 st.write("This app includes all the figures of the paper, with some"

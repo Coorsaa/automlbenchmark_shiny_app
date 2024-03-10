@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import NamedTuple, Tuple
 
 import streamlit as st
@@ -72,3 +73,19 @@ def filters() -> Filter:
         feature_range=(min_p, max_p),
     )
 
+
+def write_card(body: str, header: str = "Important", icon: str="⚠️"):
+    with open(Path(__file__).parent.parent / "html" / "card.html", 'r') as fh:
+        card_html = fh.read()
+
+    warning_html = card_html.replace(
+        "ICON", icon
+    ).replace(
+        "HEADER", header
+    ).replace(
+        "BODY", body
+    )
+    st.markdown(
+        warning_html,
+        unsafe_allow_html=True,
+    )
