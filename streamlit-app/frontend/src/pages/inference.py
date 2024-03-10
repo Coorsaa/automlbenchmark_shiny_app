@@ -6,7 +6,7 @@ from core.visualization import FRAMEWORK_TO_COLOR, box_plot
 from core.ui import write_card, filters
 
 
-def plot_inference_barplot(results, constraint, col):
+def plot_inference_barplot(results, constraint, col, title:str):
     data = results[results["constraint"] == constraint].copy()
     # data = data[~data["framework"].isin(["constantpredictor", "TPOT"])]
 
@@ -16,7 +16,7 @@ def plot_inference_barplot(results, constraint, col):
     fig, ax = box_plot(
         data,
         metric="row/s",
-        title=f"From-Disk Batch Inference Speed",
+        title=title,
         figsize=(8, 4),
         add_counts=False,#timeout_counts,
         with_framework_names=True, # ttype == "regression",
@@ -25,40 +25,7 @@ def plot_inference_barplot(results, constraint, col):
     ax.set_yscale("log")
     st.pyplot(fig)
 
-st.write("# Inference Time")
-st.write(
-    """
-    Inference time denotes the time the model built by the AutoML framework takes to generate predictions.
-    How long inference takes depends on a lot of different factors, such as complexity of the models
-    (as a rule, large ensembles take more time than a linear model) as well as the underlying machine learning
-    libraries the different AutoML frameworks use.
-    """
-)
-write_card(
-    body="Many frameworks support optimizing models for inference speed before deployment. This functionality is "
-         "not used in this benchmark. Results are meant as a proxy and to demonstrate wide difference beyond just"
-         "model performance."
-)
 
-results = st.session_state.filtered_results.copy()
-results["framework"] = results["framework"].apply(get_print_friendly_name)
-results = results[~results["framework"].isin(["TPOT", "NaiveAutoML", "constantpredictor", "TunedRandomForest"])]
-# The framework category still remembers the frameworks were once there in the category metadata
-results["framework"] = results["framework"].astype('string').astype('category')
-left, right = st.columns([0.8,0.2])
-with left:
-    plot_inference_barplot(results, constraint="1h8c_gp3", col="infer_batch_size_file_10000")
-with right:
-    st.write("controls")
-
-left, right = st.columns([0.8,0.2])
-
-with left:
-    plot_inference_barplot(results, constraint="1h8c_gp3", col="infer_batch_size_df_1")
-with right:
-    st.write("controls")
-
-st.write("Inference and Performance")
 def calculate_pareto(xs, ys) -> list[tuple[float, float]]:
     pairs = set(zip(xs, ys))
     return [
@@ -102,6 +69,50 @@ def plot_scatter(mean_results, constraint, metric, time_budget):
     ax.set_ylabel('median scaled performance')
     seaborn.move_legend(ax, "upper right", bbox_to_anchor=(1.6, 1))
     st.pyplot(fig)
+
+st.write("# Inference Time")
+with st.expander("More on inference time and how we measure it..."):
+    st.write(
+        """
+        Inference time denotes the time the model built by the AutoML framework takes to generate predictions.
+        How long inference takes depends on a lot of different factors, such as complexity of the models
+        (as a rule, large ensembles take more time than a linear model) as well as the underlying machine learning
+        libraries the different AutoML frameworks use.
+        
+        In the benchmark, we measure both in-memory and from disk inference times. For in-memory inference times
+        we pass a pandas dataframe to the framework, and for loading from disk we provide them with the location
+        on disk. We measured single-row inference speed for both from-disk and in-memory measurements, and
+        measured various batch sizes for from-disk inference speed.
+        
+        For batched inference speed, we only measured batch sizes that did not exceed dataset size, 
+        because many AutoML frameworks would not provide models stable or fast enough to reliably perform inference on 
+        batches much larger than training size. Data is sampled from the test set.
+        """
+    )
+    write_card(
+        header="Many frameworks support optimizing models for inference speed before deployment.",
+        body=" This functionality is "
+             "not used in this benchmark. Results are meant as a proxy and to demonstrate wide difference beyond just"
+             " model performance."
+    )
+
+filter_ = filters()
+
+results = st.session_state.filtered_results.copy()
+results["framework"] = results["framework"].apply(get_print_friendly_name)
+results = results[~results["framework"].isin(["TPOT", "NaiveAutoML", "constantpredictor", "TunedRandomForest"])]
+# The framework category still remembers the frameworks were once there in the category metadata
+results["framework"] = results["framework"].astype('string').astype('category')
+results = results[results["task"].isin(filter_.task_names)]
+left, right = st.columns([0.5,0.5])
+with left:
+    plot_inference_barplot(results, constraint="1h8c_gp3", col="infer_batch_size_file_10000",
+                           title="From-Disk Batch Inference Speed")
+with right:
+    plot_inference_barplot(results, constraint="1h8c_gp3", col="infer_batch_size_df_1", title="In-Memory Inference Speed")
+
+
+st.write("Inference and Performance")
 
 results = st.session_state.filtered_results.copy()
 results["framework"] = results["framework"].apply(get_print_friendly_name)

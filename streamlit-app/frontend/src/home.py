@@ -27,8 +27,8 @@ st.write("""
 
 This app allows you to further inspect the results presented in the JMLR paper
 "AMLB: an AutoML Benchmark" by Gijsbers et al. (2024). The paper discusses the benchmark design and its limitations,
-and contextualizes the results. We strongly encourage you to first read the paper before
-drawing any conclusions. 
+and contextualizes the results. While we provide some additional context in this app, we strongly encourage you to 
+read the paper before drawing any conclusions. 
 """)
 
 write_card(

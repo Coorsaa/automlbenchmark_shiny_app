@@ -9,6 +9,7 @@ class Filter(NamedTuple):
     task_type: str
     instance_range: Tuple[int, int]
     feature_range: Tuple[int, int]
+    task_names: list[str]
 
 
 def filters() -> Filter:
@@ -71,6 +72,7 @@ def filters() -> Filter:
         metrics=metric,
         instance_range=(min_n, max_n),
         feature_range=(min_p, max_p),
+        task_names=list(selected["name"]),
     )
 
 
