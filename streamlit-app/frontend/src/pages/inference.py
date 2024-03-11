@@ -107,7 +107,8 @@ with right:
     plot_inference_barplot(results, constraint="1h8c_gp3", col="infer_batch_size_df_1", title="In-Memory Inference Speed")
 
 
-st.write("Inference and Performance")
+st.write("## Inference and Performance")
+st.write("Amongst the best models, there is a trade-off between predictive performance and inference times.")
 
 results = st.session_state.filtered_results.copy()
 results["framework"] = results["framework"].apply(get_print_friendly_name)
@@ -118,10 +119,9 @@ if "neg_rmse" in filter_.metrics:
 
 data = mr[~mr["framework"].isin(exclude)]
 data = data[(data["constraint"].isin(filter_.constraints)) & (data["metric"].isin(filter_.metrics))]
-# data = data[data["task"].isin(filter_.task_names)]
+data = data[data["task"].isin(filter_.task_names)]
 data = data.groupby(["framework", "constraint", "metric"])[
     ["infer_batch_size_file_10000", "scaled"]].median()
-st.write("CHECK TASK FILTER")
 st.write("ADD SWITCH DISK/MEMORY")
 data["row_per_s"] = 10_000. / data["infer_batch_size_file_10000"]
 budgets = [get_print_friendly_name(c) for c in filter_.constraints]
