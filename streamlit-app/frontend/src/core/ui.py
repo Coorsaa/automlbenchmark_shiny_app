@@ -36,6 +36,8 @@ def filters() -> Filter:
 
     meta = st.session_state.metadataset.copy()
     keep = meta[meta.name.isin(selected_tasks)]
+    keep["Number of Instances"] = keep["Number of Instances"].astype(int)
+    keep["Number of Features"] = keep["Number of Features"].astype(int)
     with left:
         n_range = (
             keep["Number of Instances"].min(),
