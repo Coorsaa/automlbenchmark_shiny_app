@@ -12,15 +12,22 @@ class Filter(NamedTuple):
     task_names: list[str]
 
 
-def filters() -> Filter:
+def filters(constraints: dict[str, str] | None = None, metrics: dict[str, list[str]] | None = None) -> Filter:
+    constraints = constraints or {"1 hour": "1h8c_gp3", "4 hours": "4h8c_gp3"}
+    default_metrics = {
+        "Binary": ["auc"],
+        "Multiclass": ["neg_logloss"],
+        "Regression": ["neg_rmse"],
+        "All": ["auc", "neg_logloss", "neg_rmse"]
+    }
+    metrics = metrics or default_metrics
     left, right = st.columns([0.5, 0.5])
     with left:
         constraint = st.selectbox(
             label="Time",
-            options=["1 hour", "4 hours"],
+            options=constraints,
             index=0,
         )
-        constraint = {"1 hour": "1h8c_gp3", "4 hours": "4h8c_gp3"}[constraint]
 
     with right:
         ttype = st.selectbox(
@@ -29,8 +36,8 @@ def filters() -> Filter:
             index=0,
         )
 
-    metric = {"Binary": ["auc"], "Multiclass": ["neg_logloss"], "Regression": ["neg_rmse"],
-              "All": ["auc", "neg_logloss", "neg_rmse"]}[ttype]
+    constraint = constraints[constraint]
+    metric = metrics[ttype]
     is_selected_ttype = st.session_state.raw_data["metric"].isin(metric)
     selected_tasks = st.session_state.raw_data[is_selected_ttype]["task"]
 
