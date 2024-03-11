@@ -3,6 +3,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 
 from core.data import preprocess_data, get_print_friendly_name
+from core.ui import filters
 
 st.write("# Critical Difference Diagrams")
 st.write("""
@@ -51,36 +52,29 @@ with st.expander("More about CD diagrams"):
 
     )
 
-# with st.expander("What if a framework fails?"):
-#     st.write("")
 
-constraint = st.selectbox(
-    label="Time",
-    options=["1 hour", "4 hours"],
-    index=0,
-)
-constraint = {"1 hour": "1h8c_gp3", "4 hours": "4h8c_gp3"}[constraint]
-ttype = st.selectbox(
-    label="Task Type",
-    options=["Binary", "Multiclass", "Regression", "All"],
-    index=0,
-)
-metric = {"Binary": ["auc"], "Multiclass": ["neg_logloss"], "Regression": ["neg_rmse"], "All": ["auc", "neg_logloss", "neg_rmse"]}[ttype]
+filter_ = filters()
 mean_results = st.session_state.filtered_results.copy()
 mean_results["framework"] = mean_results["framework"].apply(get_print_friendly_name)
 mean_results = preprocess_data(mean_results)
 frameworks_to_exclude = ["autosklearn2", "NaiveAutoML"]
-if "neg_rmse" in metric and constraint == "4h8c_gp3":
+if "neg_rmse" in filter_.metrics and "4h8c_gp3" in filter_.constraints:
     frameworks_to_exclude.extend(["MLJAR(P)", "AutoGluon(HQ)", "AutoGluon(HQIL)"])
 mean_results = mean_results[~mean_results["framework"].isin(frameworks_to_exclude)]
-mean_results = mean_results[(mean_results["constraint"] == constraint) & (mean_results["metric"].isin(metric))]
+mean_results = mean_results[(mean_results["constraint"].isin(filter_.constraints)) & (mean_results["metric"].isin(filter_.metrics))]
 mean_results = mean_results[["framework", "task", "result"]]
+mean_results = mean_results[mean_results["task"].isin(filter_.task_names)]
 mean_results = mean_results.pivot(index="task", columns="framework", values="result")
-result = autorank(
-    mean_results,
-)
-fig, ax = plt.subplots(1, 1, figsize=(10, 8))
-plot_stats(result, ax=ax)
-# from pages._copycd import cd_evaluation
-# _, fig = cd_evaluation(mean_results, maximize_metric=True)
-st.pyplot(fig)
+try:
+    result = autorank(
+        mean_results,
+        force_mode="nonparametric"
+    )
+except ValueError as e:
+    if "requires at least five" not in str(e):
+        raise
+    st.write(f"Creating the CD diagram requires including at least five datasets to be included.")
+else:
+    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    plot_stats(result, ax=ax)
+    st.pyplot(fig)
