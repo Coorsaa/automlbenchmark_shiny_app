@@ -1,6 +1,7 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn
+import pandas as pd
 from core.data import get_print_friendly_name, preprocess_data, impute_results, is_old
 from core.visualization import FRAMEWORK_TO_COLOR, box_plot
 from core.ui import write_card, filters
@@ -40,16 +41,7 @@ def plot_pareto(data, x, y, ax, color="#cccccc"):
     for opt, next_opt in zip(pareto, pareto[1:]):
         ax.plot([opt[0], opt[0], next_opt[0]], [opt[1],next_opt[1], next_opt[1]], color=color, zorder=0)
 
-def plot_scatter(mean_results, constraint, metric, time_budget):
-    ttype = {"neg_rmse": "regression", "auc": "binary classification", "neg_logloss": "multiclass classification"}[metric]
-    exclude = ["constantpredictor", "RandomForest", "TunedRandomForest", "TPOT"]
-    if ttype == "regression":
-        exclude += ["autosklearn2"]
-
-    data = mean_results[~mean_results["framework"].isin(exclude)]
-    data = data[(data["constraint"] == constraint)  & (data["metric"] == metric)]
-    data = data.groupby(["framework", "constraint", "metric"])[["infer_batch_size_file_10000", "scaled"]].median()
-    data["row_per_s"] = 10_000. / data["infer_batch_size_file_10000"]
+def plot_scatter(data: pd.DataFrame, title: str):
     color_map = {k: v for k, v in FRAMEWORK_TO_COLOR.items() if k not in exclude}
 
     fig, ax = plt.subplots(1, 1, figsize=(8,8))
@@ -63,7 +55,7 @@ def plot_scatter(mean_results, constraint, metric, time_budget):
         ax=ax,
     )
     plot_pareto(data, x="row_per_s", y="scaled", ax=ax)
-    ax.set_title(f"{ttype} {time_budget}")
+    ax.set_title(title)
     ax.set_xscale('log')
     ax.set_xlabel('median rows per second')
     ax.set_ylabel('median scaled performance')
@@ -71,6 +63,7 @@ def plot_scatter(mean_results, constraint, metric, time_budget):
     st.pyplot(fig)
 
 st.write("# Inference Time")
+st.write("Inference time denotes the time the model built by the AutoML framework takes to generate predictions.")
 with st.expander("More on inference time and how we measure it..."):
     st.write(
         """
@@ -96,7 +89,9 @@ with st.expander("More on inference time and how we measure it..."):
              " model performance."
     )
 
-filter_ = filters()
+filter_ = filters(
+    constraints={"1 hour": "1h8c_gp3"},
+)
 
 results = st.session_state.filtered_results.copy()
 results["framework"] = results["framework"].apply(get_print_friendly_name)
@@ -117,9 +112,17 @@ st.write("Inference and Performance")
 results = st.session_state.filtered_results.copy()
 results["framework"] = results["framework"].apply(get_print_friendly_name)
 mr = preprocess_data(results)
-metric=st.selectbox(
-    label="metric",
-    options=["neg_rmse", "neg_logloss", "auc"],
-    index=0,
-)
-plot_scatter(mr, "1h8c_gp3",metric, "1 hour")
+exclude = ["constantpredictor", "RandomForest", "TunedRandomForest", "TPOT", "NaiveAutoML"]
+if "neg_rmse" in filter_.metrics:
+    exclude += ["autosklearn2"]
+
+data = mr[~mr["framework"].isin(exclude)]
+data = data[(data["constraint"].isin(filter_.constraints)) & (data["metric"].isin(filter_.metrics))]
+# data = data[data["task"].isin(filter_.task_names)]
+data = data.groupby(["framework", "constraint", "metric"])[
+    ["infer_batch_size_file_10000", "scaled"]].median()
+st.write("CHECK TASK FILTER")
+st.write("ADD SWITCH DISK/MEMORY")
+data["row_per_s"] = 10_000. / data["infer_batch_size_file_10000"]
+budgets = [get_print_friendly_name(c) for c in filter_.constraints]
+plot_scatter(data, title=f"{','.join(budgets)}")
