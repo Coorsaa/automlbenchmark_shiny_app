@@ -34,7 +34,6 @@ read the paper before drawing any conclusions.
 write_card(
     body= """This app was not part of the JMLR peer review process. If you find any mistakes,
 please open a <a href="#">Github issue</a>. We welcome contributions.""",
-   icon="Number Of Instances",
     header="Important",
 )
 
@@ -49,7 +48,12 @@ st.page_link("pages/stability.py", label=" * Figure 8 and 9: Errors and training
 
 st.write("""The data this app visualizes is available at ___ and ___.""")
 
-
+write_card(
+    body= "Click the three stacked dots in the top right, then navigate to"
+          "`Settings` and select `Wide Mode`.",
+    header="Plots too small?",
+    icon="💡"
+)
 
 st.write("""
 ## Code and Contributions
@@ -69,4 +73,5 @@ If you are interested in contributing, please let us know (on Github), we would 
 )
 
 if __name__ == "__main__":
-    initialize_data(Path("~/Documents/data/amlb/").expanduser())
+    # initialize_data(Path("~/Documents/data/amlb/").expanduser())
+    initialize_data(Path("~/repositories/amlb-results/data/").expanduser())
