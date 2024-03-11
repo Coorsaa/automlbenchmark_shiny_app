@@ -64,7 +64,6 @@ def _load_default_metadata(data_directory: Path):
             dtype=categorical_features,
         )
 
-
         features = ["NumberOfClasses", "NumberOfFeatures", "NumberOfInstances",
                     "NumberOfInstancesWithMissingValues", "NumberOfMissingValues",
                     "NumberOfSymbolicFeatures", "name"]
@@ -83,6 +82,7 @@ def _load_default_metadata(data_directory: Path):
                                                                 "Number of Instances"] *
                                                             datasets[
                                                                 "Number of Features"])) * 100
+        datasets["name"] = datasets["name"].str.replace(".","_")
         st.session_state.metadataset = datasets
         st.session_state.filtered_metadataset = datasets
 
