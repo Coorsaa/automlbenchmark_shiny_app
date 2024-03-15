@@ -250,19 +250,6 @@ if __name__ == "__main__":
         evaluate how well the AutoML frameworks observe the provided time constraint.
         """
     )
-    with st.expander("Does training time stability matter?"):
-        st.write(
-            """
-            Yes, in some cases having a stable well-behaved AutoML framework matters, in others, not so much.
-            For example, if you simply want to build a model once, then it may not matter to you.
-            You can invoke the training procedure multiple times, until it runs to completion, or
-            evaluate the use of other AutoML framework.
-            
-            On the other hand, if you want to use the AutoML framework regularly, e.g., to retrain models 
-            on a daily basis, or tackle many different problems with them, then it may be very disruptive to
-            have a system which is not well-behaved.
-            """
-        )
 
     st.write(
         """
@@ -273,22 +260,40 @@ if __name__ == "__main__":
         """
     )
     with st.expander("What do the categories mean?"):
-        st.write("copy from paper")
+        st.write("""
+        We categorize the errors into the following categories:
+        
+         * **Memory**: The framework crashed due to exceeding available memory or encountering other memory-related
+         errors, such as segmentation faults.
+         * **Time**: The framework exceeded the time limit past the leniency period.
+         * **Data**: Errors due to specific data characteristics (such as imbalanced data) occurred.
+         * **Implementation**: Any errors caused by bugs in the AutoML framework code occurred.
+         
+        These categories are a bit crude and ultimately subjective, since from a reductive viewpoint, 
+        all errors are implementation errors. However, they serve for a quick overview. We also introduce a ‘fixed’ 
+        category to denote errors from a specific bug in `AUTOGLUON(HQIL)` which is already fixed in newer releases. 
+        Additional details on this, and other errors encountered, can be found in Appendix D of our paper. 
+        """)
     with st.expander("Why so many errors?"):
         st.write(
             """
             Engineering a well-behaved AutoML framework is hard for several reasons.
             First, it needs to handle all kind of different input data.
+            Whether that's dealing with different data types, data dimensions varying orders of magnitude,
+            or very skewed class distributions -- different approaches need to be correctly identified for 
+            different data, and it's easy to miss an edge case.
             
-            ...
+            Second, AutoML frameworks almost always use ML algorithm implementations developed by third parties.
+            These may have been developed with different design goals, assumptions, or philosophies. For example, while 
+            an AutoML framework shouldn't crash on large data, individual algorithms may have been developed with the 
+            understanding that large datasets may make the algorithm unstable (and e.g., raise memory errors). This 
+            means that AutoML framework developers have to account for all the weird ways underlying components may
+            behave, whether by design or not.
             
-            Second, you build on the work of others, ..., which may have different design goals of philosophies.
-            
-            ...
-            
-            This makes sense as it is the longest phase with the most components, such as data preprocessing, evaluation of
-            various ML pipelines, building ensembles, and more. Many implementations that AutoML frameworks
-            build on are not well-behaved themselves: they may freeze, generate segmentation faults, and so on.
+            Third, additional complexities like custom data preprocessing pipelines add a lot of complexity to the
+            framework as a whole. We see many AutoML frameworks add some kind of pre- and/or post-processing steps
+            to their AutoML framework, and they all have to work well with the very different ML pipelines which
+            may be generated during the phase in which the AutoML framework finds and optimizes models.
             """
         )
     with st.expander("Why are most errors during training?"):
@@ -303,11 +308,22 @@ if __name__ == "__main__":
             because that is no longer run. So, even if a hypothetical framework would crash 50% of the time during
             training, if it reaches the inference stage crash 50% of the time during inference, you would expect 
             only half as many failures during inference time as during training.
-            
-            ADD CLARIFYING FIGURE
             """
         )
 
+    with st.expander("Does training time stability matter?"):
+        st.write(
+            """
+            Yes, in some cases having a stable well-behaved AutoML framework matters, in others, not so much.
+            For example, if you simply want to build a model once, then it may not matter to you.
+            You can invoke the training procedure multiple times, until it runs to completion, or
+            evaluate the use of other AutoML framework.
+
+            On the other hand, if you want to use the AutoML framework regularly, e.g., to retrain models 
+            on a daily basis, or tackle many different problems with them, then it may be very disruptive to
+            have a system which is not well-behaved.
+            """
+        )
     r, l = generate_error_table()
     left, right = st.columns([0.7, 0.3])
     with right:
