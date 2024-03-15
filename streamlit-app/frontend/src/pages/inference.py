@@ -41,20 +41,20 @@ def plot_pareto(data, x, y, ax, color="#cccccc"):
     for opt, next_opt in zip(pareto, pareto[1:]):
         ax.plot([opt[0], opt[0], next_opt[0]], [opt[1],next_opt[1], next_opt[1]], color=color, zorder=0)
 
-def plot_scatter(data: pd.DataFrame, title: str):
+def plot_scatter(data: pd.DataFrame, x:str,  title: str):
     color_map = {k: v for k, v in FRAMEWORK_TO_COLOR.items() if k not in exclude}
 
     fig, ax = plt.subplots(1, 1, figsize=(8,8))
     ax = seaborn.scatterplot(
         data,
-        x="row_per_s",
+        x=x,
         y="scaled",
         hue="framework",
         palette=color_map,
         s=70,  # marker size
         ax=ax,
     )
-    plot_pareto(data, x="row_per_s", y="scaled", ax=ax)
+    plot_pareto(data, x=x, y="scaled", ax=ax)
     ax.set_title(title)
     ax.set_xscale('log')
     ax.set_xlabel('median rows per second')
@@ -120,9 +120,23 @@ if "neg_rmse" in filter_.metrics:
 data = mr[~mr["framework"].isin(exclude)]
 data = data[(data["constraint"].isin(filter_.constraints)) & (data["metric"].isin(filter_.metrics))]
 data = data[data["task"].isin(filter_.task_names)]
-data = data.groupby(["framework", "constraint", "metric"])[
-    ["infer_batch_size_file_10000", "scaled"]].median()
-st.write("ADD SWITCH DISK/MEMORY")
-data["row_per_s"] = 10_000. / data["infer_batch_size_file_10000"]
+
+data = data.groupby(["framework", "constraint", "metric"], as_index=False)[
+    ["infer_batch_size_file_10000", "scaled", "infer_batch_size_df_1"]].median()
+# st.write("ADD SWITCH DISK/MEMORY")
+data["disk_row_per_s"] = 10_000. / data["infer_batch_size_file_10000"]
+data["ram_row_per_s"] = 1. / data["infer_batch_size_df_1"]
+
+inference_measure = st.selectbox(
+    "Inference Type",
+    options=["10,000 rows from disk", "single row in memory"],
+)
+inference_measure = {
+    "10,000 rows from disk": "disk_row_per_s",
+    "single row in memory": "ram_row_per_s"
+}[inference_measure]
+if inference_measure == "ram_row_per_s":
+    # H2O doesn't have in-memory inference, it's always serialized to disk in our setup
+    data = data[~data["framework"].isin(["H2OAutoML"])]
 budgets = [get_print_friendly_name(c) for c in filter_.constraints]
-plot_scatter(data, title=f"{','.join(budgets)}")
+plot_scatter(data, x=inference_measure, title=f"{','.join(budgets)}")

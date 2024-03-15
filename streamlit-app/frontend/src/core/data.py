@@ -65,7 +65,7 @@ def preprocess_data(results):
         with_="AutoGluon(HQ)",
     )
     mean_results = (results[
-        ["framework", "task", "constraint", "metric", "result", "imputed", "infer_batch_size_file_10000"]])
+        ["framework", "task", "constraint", "metric", "result", "imputed", "infer_batch_size_file_10000", "infer_batch_size_df_1"]])
     mean_results["task"] = mean_results["task"].astype('object')
     mean_results["metric"] = mean_results["metric"].astype('object')
     mean_results["framework"] = mean_results["framework"].astype('object')
@@ -75,6 +75,7 @@ def preprocess_data(results):
         {
             "result": "mean",
             "infer_batch_size_file_10000": "mean",
+            "infer_batch_size_df_1": "mean",
             "imputed": "sum"
         }
     )
