@@ -165,7 +165,9 @@ for index, row in mean_results.iterrows():
 st.write("## The Effect of the Time Constraint \n"
          "In the plot below, you can see that there is generally only marginal improvement when allowing for more time."
          " In this case, the 'scaled performance' is slightly modified: 0 is the RF performance with a 4 hour budget, "
-         "and 1 is the best observed performance across any budget.")
+         "and 1 is the best observed performance across any budget."
+" Note that this plot updates according to the dataset selection above."
+         )
 
 fig, ax = plt.subplots(1, 1, figsize=(6,4))
 # The frameworks below are excluded because they do not have recent results for all of the benchmark and time constraints,
@@ -174,6 +176,7 @@ mean_results = mean_results[~mean_results.framework.str.lower().isin(
     ["autogluon(hqil)", "tpot", "gama(b)", "constantpredictor", "randomforest", "mljar(p)"])
 ]
 baselines = ["constantpredictor", "RandomForest", "TunedRandomForest"]
+mean_results = mean_results[mean_results["task"].isin(filter_.task_names)]
 
 seaborn.boxplot(
     data=mean_results,

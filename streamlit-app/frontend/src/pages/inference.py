@@ -108,7 +108,8 @@ with right:
 
 
 st.write("## Inference and Performance")
-st.write("Amongst the best models, there is a trade-off between predictive performance and inference times.")
+st.write("Amongst the best models, there is a trade-off between predictive performance and inference times."
+         " Note that this plot updates according to the dataset selection above.")
 
 results = st.session_state.filtered_results.copy()
 results["framework"] = results["framework"].apply(get_print_friendly_name)
