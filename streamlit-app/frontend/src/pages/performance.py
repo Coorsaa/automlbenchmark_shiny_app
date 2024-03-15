@@ -31,15 +31,15 @@ with st.expander("Why scaled performance?"):
     """
 )
 from core.ui import filters
-filter = filters()
+filter_ = filters()
 
 mean_results = st.session_state.filtered_results.copy()
 mean_results["framework"] = mean_results["framework"].apply(get_print_friendly_name)
 mean_results = preprocess_data(mean_results)
 frameworks_to_exclude = ["RandomForest", "NaiveAutoML"]
 mean_results = mean_results[~mean_results["framework"].isin(frameworks_to_exclude)]
-mean_results = mean_results[(mean_results["constraint"] == filter.constraints[0]) & (mean_results["metric"].isin(filter.metrics))]
-mean_results = filter_results(st.session_state.metadataset, mean_results, *filter.instance_range, *filter.feature_range)
+mean_results = mean_results[(mean_results["constraint"] == filter_.constraints[0]) & (mean_results["metric"].isin(filter_.metrics))]
+mean_results = filter_results(st.session_state.metadataset, mean_results, *filter_.instance_range, *filter_.feature_range)
 
 
 def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9), with_framework_names=True,
@@ -125,13 +125,13 @@ def box_plot(data, metric=None, ylog=False, title="", ylim=None, figsize=(16, 9)
 
 
 data = mean_results.copy()
-time_budget = get_print_friendly_name(filter.constraints[0])
+time_budget = get_print_friendly_name(filter_.constraints[0])
 
 periwinkle_blue = "#6f7cc8"
 fig, ax = box_plot(
     data,
     metric="scaled",
-    title=f"{filter.task_type.capitalize()}, {time_budget}",
+    title=f"{filter_.task_type.capitalize()}, {time_budget}",
     ylim=[-2, 1],
     figsize=(6, 3),
     add_counts="outliers"

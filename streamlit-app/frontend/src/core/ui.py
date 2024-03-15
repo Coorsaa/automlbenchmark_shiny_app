@@ -32,7 +32,7 @@ def filters(constraints: dict[str, str] | None = None, metrics: dict[str, list[s
     with right:
         ttype = st.selectbox(
             label="Task Type",
-            options=["Binary", "Multiclass", "Regression"],
+            options=["Binary", "Multiclass", "Regression", "All"],
             index=0,
         )
 

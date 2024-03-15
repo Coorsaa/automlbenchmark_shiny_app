@@ -84,9 +84,9 @@ with st.expander("More on inference time and how we measure it..."):
     )
     write_card(
         header="Many frameworks support optimizing models for inference speed before deployment.",
-        body=" This functionality is "
-             "not used in this benchmark. Results are meant as a proxy and to demonstrate wide difference beyond just"
-             " model performance."
+        body=" This functionality is not used in this benchmark. "
+             "Results are meant as a proxy and to demonstrate differences in models beyond predictive performance. "
+             "Other important differences include factors like e.g., interpretability."
     )
 
 filter_ = filters(
@@ -121,7 +121,7 @@ data = mr[~mr["framework"].isin(exclude)]
 data = data[(data["constraint"].isin(filter_.constraints)) & (data["metric"].isin(filter_.metrics))]
 data = data[data["task"].isin(filter_.task_names)]
 
-data = data.groupby(["framework", "constraint", "metric"], as_index=False)[
+data = data.groupby(["framework", "constraint"], as_index=False)[
     ["infer_batch_size_file_10000", "scaled", "infer_batch_size_df_1"]].median()
 # st.write("ADD SWITCH DISK/MEMORY")
 data["disk_row_per_s"] = 10_000. / data["infer_batch_size_file_10000"]
